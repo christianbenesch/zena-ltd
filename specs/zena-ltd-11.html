@@ -1,0 +1,1809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>zena.ltd — Daily Breath Hold</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root{
+  --bg-deep:#071620;
+  --bg-panel:#0F2536;
+  --bg-panel-2:#122b3f;
+  --line:#1C3B52;
+  --text-primary:#EAF4F4;
+  --text-muted:#7FA4B8;
+  --accent-teal:#35C9C1;
+  --accent-coral:#FF8B61;
+  --accent-blue:#5C9EE0;
+  --danger:#FF6B6B;
+}
+
+*{box-sizing:border-box; margin:0; padding:0;}
+
+body{
+  background:
+    radial-gradient(ellipse at 50% -10%, #0d2c40 0%, var(--bg-deep) 55%),
+    var(--bg-deep);
+  color:var(--text-primary);
+  font-family:'IBM Plex Sans', sans-serif;
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  padding:32px 16px 64px;
+  -webkit-font-smoothing:antialiased;
+}
+
+.app{ width:100%; max-width:520px; }
+
+header{ text-align:center; margin-bottom:20px; }
+.eyebrow{
+  font-family:'IBM Plex Mono', monospace;
+  font-size:11px; letter-spacing:0.18em; color:var(--accent-teal);
+  text-transform:uppercase; margin-bottom:10px;
+}
+h1{ font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:32px; letter-spacing:-0.01em; }
+.sub{ color:var(--text-muted); font-size:14px; margin-top:6px; line-height:1.5; }
+
+/* ---- tabs ---- */
+.tabs{ display:flex; gap:6px; margin-bottom:16px; background:var(--bg-panel); border:1px solid var(--line); border-radius:14px; padding:5px; }
+.tab-btn{
+  flex:1; background:none; border:none; color:var(--text-muted);
+  font-family:'Space Grotesk', sans-serif; font-weight:600; font-size:13px;
+  padding:10px 0; border-radius:10px; cursor:pointer; transition:all 0.2s ease;
+}
+.tab-btn.active{ background:var(--accent-teal); color:#04211d; box-shadow:0 2px 10px -2px rgba(53,201,193,0.4); }
+.view{ display:none; opacity:0; transform:translateY(6px); }
+.view.active{
+  display:block;
+  animation: viewIn 0.35s cubic-bezier(0.22,1,0.36,1) forwards;
+}
+@keyframes viewIn{
+  from{ opacity:0; transform:translateY(8px); }
+  to{ opacity:1; transform:translateY(0); }
+}
+
+/* ---- gauge card ---- */
+.gauge-card{
+  background:linear-gradient(180deg, var(--bg-panel-2), var(--bg-panel));
+  border:1px solid var(--line); border-radius:20px;
+  padding:28px 20px 24px; display:flex; flex-direction:column; align-items:center;
+  box-shadow:0 20px 60px -20px rgba(0,0,0,0.6);
+}
+.ring-wrap{ position:relative; width:260px; height:260px; }
+.ring-pulse{
+  position:absolute; inset:18px; border-radius:50%;
+  border:2px solid transparent;
+  pointer-events:none;
+  transition: transform 0.9s cubic-bezier(0.4,0,0.2,1), opacity 0.6s ease, border-color 0.5s ease, box-shadow 0.5s ease;
+  opacity:0;
+}
+.ring-pulse.inhale{
+  opacity:0.7;
+  border-color:rgba(255,139,97,0.5);
+  box-shadow:0 0 28px 4px rgba(255,139,97,0.25);
+  animation: breatheIn 4s ease-in-out infinite;
+}
+.ring-pulse.hold{
+  opacity:0.85;
+  border-color:rgba(53,201,193,0.6);
+  box-shadow:0 0 36px 8px rgba(53,201,193,0.3);
+  transform:scale(1.04);
+  animation: holdGlow 2.4s ease-in-out infinite;
+}
+.ring-pulse.exhale, .ring-pulse.recovery{
+  opacity:0.65;
+  border-color:rgba(92,158,224,0.5);
+  box-shadow:0 0 24px 4px rgba(92,158,224,0.2);
+  animation: breatheOut 4s ease-in-out infinite;
+}
+@keyframes breatheIn{
+  0%,100%{ transform:scale(0.94); opacity:0.45; }
+  50%{ transform:scale(1.08); opacity:0.85; }
+}
+@keyframes breatheOut{
+  0%,100%{ transform:scale(1.06); opacity:0.7; }
+  50%{ transform:scale(0.92); opacity:0.4; }
+}
+@keyframes holdGlow{
+  0%,100%{ box-shadow:0 0 28px 6px rgba(53,201,193,0.25); }
+  50%{ box-shadow:0 0 48px 12px rgba(53,201,193,0.4); }
+}
+svg.ring{ width:100%; height:100%; transform:rotate(-90deg); }
+.ring-track{ fill:none; stroke:var(--line); stroke-width:10; }
+.ring-progress{
+  fill:none; stroke:var(--accent-teal); stroke-width:10; stroke-linecap:round;
+  transition: stroke 0.55s ease, filter 0.45s ease, stroke-dashoffset 0.35s linear;
+  filter: drop-shadow(0 0 6px rgba(53,201,193,0.45));
+}
+.ring-center{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+.phase-label{
+  font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:0.16em; text-transform:uppercase;
+  color:var(--accent-teal); margin-bottom:6px;
+  transition: color 0.45s ease, transform 0.35s ease, opacity 0.3s ease;
+}
+.phase-label.phase-enter{ transform:translateY(-4px); opacity:0; }
+.time-display{
+  font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:56px; line-height:1;
+  letter-spacing:-0.02em; font-variant-numeric:tabular-nums;
+  transition: transform 0.3s ease, color 0.4s ease;
+}
+.time-display.tick{ transform:scale(1.06); }
+.round-label{ font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--text-muted); margin-top:8px; transition:opacity 0.3s ease; }
+.program-tag{ font-family:'IBM Plex Mono', monospace; font-size:10px; color:var(--accent-coral); margin-top:4px; letter-spacing:0.08em; text-transform:uppercase; }
+.hold-explainer{
+  font-family:'IBM Plex Sans', sans-serif; font-size:12.5px; color:var(--text-muted);
+  text-align:center; line-height:1.45; margin-top:14px; max-width:340px;
+  padding:0 8px;
+}
+.hold-explainer strong{ color:var(--text-primary); font-weight:600; }
+
+/* ---- practice picker ---- */
+.practice-picker{
+  display:none; flex-wrap:wrap; gap:8px; margin-bottom:14px;
+}
+.practice-picker.visible{ display:flex; }
+.practice-chip{
+  flex:1 1 calc(33% - 8px); min-width:100px;
+  background:linear-gradient(180deg, var(--bg-panel-2), var(--bg-panel));
+  border:1px solid var(--line); color:var(--text-muted);
+  font-family:'Space Grotesk', sans-serif; font-weight:600; font-size:12px;
+  padding:12px 8px 11px; border-radius:14px; cursor:pointer; text-align:center;
+  transition: all 0.22s ease;
+  display:flex; flex-direction:column; align-items:center; gap:4px;
+  position:relative; overflow:hidden;
+}
+.practice-chip .chip-icon{ font-size:18px; line-height:1; }
+.practice-chip .chip-label{ letter-spacing:0.01em; }
+.practice-chip .chip-lock{
+  position:absolute; top:6px; right:7px; font-size:9px; opacity:0.75;
+}
+.practice-chip:hover{
+  border-color:var(--text-muted); color:var(--text-primary);
+  transform:translateY(-1px);
+  box-shadow:0 6px 18px -8px rgba(0,0,0,0.5);
+}
+.practice-chip.active{
+  border-color:var(--accent-teal); color:#04211d; background:var(--accent-teal);
+  box-shadow:0 4px 18px -4px rgba(53,201,193,0.55);
+}
+.practice-chip.locked{
+  opacity:0.78; cursor:pointer; border-style:dashed;
+}
+.practice-chip.locked:hover{
+  opacity:1; border-color:var(--accent-coral); color:var(--accent-coral);
+  box-shadow:0 0 16px -4px rgba(255,139,97,0.35);
+}
+.practice-meta{
+  font-family:'IBM Plex Mono', monospace; font-size:10px; color:var(--text-muted);
+  text-align:center; margin-bottom:10px; letter-spacing:0.04em; display:none;
+  line-height:1.4;
+}
+.practice-meta.visible{ display:block; }
+
+.offer-list{
+  list-style:none; margin:12px 0 4px; padding:0;
+  display:flex; flex-direction:column; gap:8px;
+}
+.offer-list li{
+  display:flex; align-items:flex-start; gap:10px;
+  font-size:13px; color:var(--text-primary); line-height:1.35;
+}
+.offer-list .oi{
+  flex-shrink:0; width:24px; height:24px; border-radius:8px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:13px; background:rgba(53,201,193,0.12); border:1px solid rgba(53,201,193,0.25);
+}
+.offer-list .ot{ flex:1; }
+.offer-list .ot span{
+  display:block; font-family:'IBM Plex Mono', monospace; font-size:10px;
+  color:var(--text-muted); margin-top:1px; letter-spacing:0.03em;
+}
+.offer-extra{
+  margin-top:12px; padding-top:12px; border-top:1px solid var(--line);
+  font-size:12.5px; color:var(--text-muted); line-height:1.5;
+}
+.offer-extra strong{ color:var(--text-primary); }
+
+.practice-stats-grid{
+  display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:12px;
+}
+.practice-stat-card{
+  background:var(--bg-deep); border:1px solid var(--line); border-radius:12px;
+  padding:12px; text-align:center;
+}
+.practice-stat-card .ps-name{
+  font-family:'IBM Plex Mono', monospace; font-size:9px; letter-spacing:0.08em;
+  text-transform:uppercase; color:var(--text-muted); margin-bottom:4px;
+}
+.practice-stat-card .ps-val{
+  font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:18px; color:var(--accent-teal);
+}
+
+.controls-row{ display:flex; gap:12px; margin-top:26px; width:100%; }
+button{
+  font-family:'Space Grotesk', sans-serif; font-weight:600; font-size:15px;
+  border:none; border-radius:12px; padding:14px 0; cursor:pointer; flex:1;
+  transition: transform 0.18s ease, box-shadow 0.25s ease, background 0.25s ease, color 0.25s ease, border-color 0.25s ease, opacity 0.3s ease;
+}
+button:active{ transform:scale(0.96); }
+.btn-primary{
+  background:var(--accent-teal); color:#04211d;
+  box-shadow:0 4px 18px -4px rgba(53,201,193,0.55);
+}
+.btn-primary:hover{ box-shadow:0 6px 24px -2px rgba(53,201,193,0.65); transform:translateY(-1px); }
+.btn-primary.pause{
+  background:var(--accent-coral); color:#2b1206;
+  box-shadow:0 4px 18px -4px rgba(255,139,97,0.5);
+}
+.btn-secondary{ background:transparent; color:var(--text-muted); border:1px solid var(--line); }
+.btn-secondary:hover{ color:var(--text-primary); border-color:var(--text-muted); }
+
+#letGoBtn{
+  opacity:0; transform:translateY(8px) scale(0.96);
+  pointer-events:none;
+  transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.34,1.4,0.64,1), border-color 0.3s, color 0.3s, box-shadow 0.3s;
+}
+#letGoBtn.visible{
+  opacity:1; transform:translateY(0) scale(1);
+  pointer-events:auto;
+  box-shadow:0 0 20px -4px rgba(255,139,97,0.4);
+}
+#letGoBtn:hover{ box-shadow:0 0 28px -2px rgba(255,139,97,0.55); }
+
+/* ---- settings ---- */
+.settings{ background:var(--bg-panel); border:1px solid var(--line); border-radius:20px; padding:20px; margin-top:16px; }
+.setting-full{ padding:12px 0; }
+.setting-full + .setting-full{ border-top:1px solid var(--line); }
+.setting-row{ display:flex; justify-content:space-between; align-items:center; }
+.setting-label{ font-size:14px; color:var(--text-primary); }
+.setting-value{ font-family:'IBM Plex Mono', monospace; font-size:13px; color:var(--accent-teal); }
+input[type="range"]{ width:100%; accent-color:var(--accent-teal); margin-top:8px; }
+input[type="range"]:disabled{ opacity:0.4; }
+.pattern-picker{ display:flex; gap:8px; margin-top:10px; }
+.pattern-btn{
+  flex:1; background:var(--bg-deep); border:1px solid var(--line); color:var(--text-muted);
+  font-family:'IBM Plex Mono', monospace; font-size:12px; padding:9px 4px; border-radius:9px; cursor:pointer;
+  transition: border-color 0.25s ease, color 0.25s ease, background 0.25s ease, transform 0.15s ease;
+}
+.pattern-btn:active{ transform:scale(0.97); }
+.pattern-btn.active{ border-color:var(--accent-teal); color:var(--accent-teal); background:rgba(53,201,193,0.08); }
+
+/* ---- stats ---- */
+.stats-strip{ display:flex; margin-top:16px; background:var(--bg-panel); border:1px solid var(--line); border-radius:20px; overflow:hidden; }
+.stat{ flex:1; text-align:center; padding:16px 8px; }
+.stat + .stat{ border-left:1px solid var(--line); }
+.stat-value{
+  font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:22px; color:var(--accent-teal);
+  transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1), color 0.3s;
+}
+.stat-value.pop{ transform:scale(1.18); color:#5eead4; }
+.stat-key{ font-family:'IBM Plex Mono', monospace; font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.1em; margin-top:4px; }
+
+/* ---- info ---- */
+.info{ margin-top:16px; background:var(--bg-panel); border:1px solid var(--line); border-radius:20px; overflow:hidden; }
+.info-toggle{ width:100%; background:none; border:none; color:var(--text-primary); font-family:'Space Grotesk', sans-serif; font-weight:600; font-size:15px; text-align:left; padding:18px 20px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; }
+.chev{ color:var(--text-muted); transition:transform 0.25s ease; font-size:13px; }
+.chev.open{ transform:rotate(180deg); }
+.info-body{ max-height:0; overflow:hidden; transition:max-height 0.3s ease; padding:0 20px; }
+.info-body.open{ max-height:900px; padding-bottom:20px; }
+.info-body p{ color:var(--text-muted); font-size:13.5px; line-height:1.65; margin-bottom:12px; }
+.info-body strong{ color:var(--text-primary); font-weight:600; }
+.safety{ background:rgba(255,107,107,0.08); border:1px solid rgba(255,107,107,0.3); border-radius:12px; padding:14px 16px; margin-top:14px; }
+.safety-title{ font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:0.1em; color:var(--danger); text-transform:uppercase; margin-bottom:6px; }
+.safety p{ color:#e8b4b4; font-size:13px; margin:0; }
+
+footer{ text-align:center; margin-top:24px; color:var(--text-muted); font-size:11px; font-family:'IBM Plex Mono', monospace; letter-spacing:0.04em; }
+
+/* ---- program view ---- */
+.program-hero{ background:linear-gradient(180deg, var(--bg-panel-2), var(--bg-panel)); border:1px solid var(--line); border-radius:20px; padding:24px 20px; margin-bottom:16px; }
+.program-hero h2{ font-family:'Space Grotesk', sans-serif; font-size:20px; font-weight:700; margin-bottom:6px; }
+.program-hero p{ color:var(--text-muted); font-size:13.5px; line-height:1.55; margin-bottom:16px; }
+.week-list{ display:flex; flex-direction:column; gap:8px; }
+.week-row{ display:flex; align-items:center; gap:12px; background:var(--bg-deep); border:1px solid var(--line); border-radius:12px; padding:12px 14px; }
+.week-row.current{ border-color:var(--accent-teal); background:rgba(53,201,193,0.06); }
+.week-row.done{ opacity:0.55; }
+.week-num{ font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:15px; width:34px; color:var(--accent-teal); }
+.week-info{ flex:1; }
+.week-target{ font-size:13px; color:var(--text-primary); }
+.week-detail{ font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:var(--text-muted); margin-top:2px; }
+.week-dots{ display:flex; gap:3px; }
+.dot{
+  width:8px; height:8px; border-radius:50%; background:var(--line);
+  transition: background 0.35s ease, transform 0.35s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.35s ease;
+}
+.dot.filled{ background:var(--accent-teal); transform:scale(1.15); box-shadow:0 0 6px rgba(53,201,193,0.6); }
+.dot.partial{ background:var(--accent-coral); transform:scale(1.1); box-shadow:0 0 5px rgba(255,139,97,0.5); }
+
+/* ---- progress view ---- */
+.chart-card{ background:var(--bg-panel); border:1px solid var(--line); border-radius:20px; padding:20px; margin-bottom:16px; }
+.chart-card h3{ font-family:'Space Grotesk', sans-serif; font-size:15px; margin-bottom:4px; }
+.chart-sub{ color:var(--text-muted); font-size:12px; margin-bottom:14px; }
+#hrChart{ width:100%; height:140px; display:block; }
+.hr-empty{ color:var(--text-muted); font-size:13px; text-align:center; padding:24px 0; }
+
+.measure-btn{ width:100%; margin-top:6px; }
+
+/* ---- modal ---- */
+/* ---- session complete & confetti ---- */
+.ring-wrap.complete .ring-pulse{
+  opacity:0.9;
+  border-color:rgba(53,201,193,0.7);
+  box-shadow:0 0 50px 14px rgba(53,201,193,0.35);
+  animation: completePulse 1.2s ease-out forwards;
+}
+@keyframes completePulse{
+  0%{ transform:scale(1); opacity:0.9; }
+  60%{ transform:scale(1.18); opacity:0.6; }
+  100%{ transform:scale(1.3); opacity:0; }
+}
+.time-display.complete{
+  color:#5eead4;
+  animation: completePop 0.6s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes completePop{
+  0%{ transform:scale(0.7); opacity:0.5; }
+  100%{ transform:scale(1); opacity:1; }
+}
+#confettiCanvas{
+  position:fixed; inset:0; pointer-events:none; z-index:40;
+}
+
+/* ---- modal ---- */
+.modal-overlay{
+  position:fixed; inset:0; background:rgba(3,10,15,0.85); backdrop-filter:blur(4px);
+  display:none; align-items:center; justify-content:center; z-index:50; padding:20px;
+  opacity:0; transition:opacity 0.25s ease;
+}
+.modal-overlay.open{ display:flex; opacity:1; animation: fadeIn 0.25s ease forwards; }
+@keyframes fadeIn{ from{ opacity:0; } to{ opacity:1; } }
+.modal{
+  background:var(--bg-panel); border:1px solid var(--line); border-radius:20px; padding:24px;
+  width:100%; max-width:400px;
+  transform:translateY(12px) scale(0.97); transition:transform 0.3s cubic-bezier(0.22,1,0.36,1);
+}
+.modal-overlay.open .modal{ transform:translateY(0) scale(1); }
+.modal h3{ font-family:'Space Grotesk', sans-serif; font-size:17px; margin-bottom:8px; }
+.modal p{ color:var(--text-muted); font-size:13px; line-height:1.5; margin-bottom:14px; }
+#camPreview{ width:100%; border-radius:12px; margin-bottom:12px; background:#000; display:none; }
+.hr-reading{ text-align:center; font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:40px; color:var(--accent-teal); margin:10px 0; }
+.hr-status{ text-align:center; font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--text-muted); margin-bottom:14px; }
+.manual-row{ display:flex; gap:8px; margin-top:8px; }
+.manual-row input{ flex:1; background:var(--bg-deep); border:1px solid var(--line); border-radius:10px; color:var(--text-primary); font-family:'IBM Plex Mono', monospace; padding:10px; text-align:center; }
+.modal-close{ margin-top:14px; }
+
+/* ---- viral / share ---- */
+.share-strip{
+  display:none; width:100%; margin-top:14px; flex-direction:column; gap:10px;
+  animation: viewIn 0.4s cubic-bezier(0.22,1,0.36,1) forwards;
+}
+.share-strip.visible{ display:flex; }
+.share-btns{ display:flex; gap:8px; }
+.share-btns button{ font-size:13px; padding:12px 0; }
+.btn-share{
+  background:linear-gradient(135deg, #35C9C1, #5C9EE0);
+  color:#04211d; font-weight:700;
+  box-shadow:0 4px 18px -4px rgba(53,201,193,0.5);
+}
+.btn-challenge{
+  background:transparent; border:1px solid var(--accent-coral); color:var(--accent-coral);
+}
+.share-hint{
+  font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--text-muted);
+  text-align:center; letter-spacing:0.04em;
+}
+.pb-banner{
+  display:none; width:100%; margin-top:12px; padding:12px 14px;
+  background:linear-gradient(90deg, rgba(53,201,193,0.15), rgba(255,139,97,0.12));
+  border:1px solid rgba(53,201,193,0.35); border-radius:12px;
+  font-family:'Space Grotesk', sans-serif; font-weight:600; font-size:14px;
+  color:var(--accent-teal); text-align:center;
+  animation: completePop 0.5s cubic-bezier(0.34,1.56,0.64,1);
+}
+.pb-banner.visible{ display:block; }
+
+.milestone-toast{
+  position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(20px);
+  background:var(--bg-panel-2); border:1px solid var(--accent-teal);
+  border-radius:16px; padding:14px 20px; z-index:60;
+  box-shadow:0 12px 40px -8px rgba(0,0,0,0.55), 0 0 24px rgba(53,201,193,0.2);
+  opacity:0; pointer-events:none; transition: opacity 0.35s ease, transform 0.4s cubic-bezier(0.22,1,0.36,1);
+  max-width:min(360px, calc(100vw - 32px)); text-align:center;
+}
+.milestone-toast.show{ opacity:1; transform:translateX(-50%) translateY(0); pointer-events:auto; }
+.milestone-toast .mt-title{
+  font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:15px; color:var(--accent-teal);
+  margin-bottom:4px;
+}
+.milestone-toast .mt-sub{ font-size:12px; color:var(--text-muted); margin-bottom:10px; }
+.milestone-toast .mt-share{
+  background:var(--accent-teal); color:#04211d; border:none; border-radius:10px;
+  font-family:'Space Grotesk', sans-serif; font-weight:600; font-size:13px;
+  padding:8px 16px; cursor:pointer; width:100%;
+}
+
+.badges-row{
+  display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; justify-content:center;
+}
+.badge-chip{
+  font-family:'IBM Plex Mono', monospace; font-size:10px; letter-spacing:0.06em;
+  text-transform:uppercase; padding:6px 10px; border-radius:20px;
+  border:1px solid var(--line); color:var(--text-muted); background:var(--bg-deep);
+  transition: all 0.3s ease;
+}
+.badge-chip.unlocked{
+  border-color:var(--accent-teal); color:var(--accent-teal);
+  background:rgba(53,201,193,0.1); box-shadow:0 0 10px rgba(53,201,193,0.2);
+}
+.badge-chip.new{ animation: completePop 0.5s cubic-bezier(0.34,1.56,0.64,1); }
+
+.share-preview-wrap{
+  display:none; margin-top:12px; border-radius:14px; overflow:hidden;
+  border:1px solid var(--line); background:#000;
+}
+.share-preview-wrap.visible{ display:block; }
+#sharePreviewImg{ width:100%; display:block; border-radius:14px; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <div class="eyebrow">zena.ltd</div>
+    <h1>Zena</h1>
+    <div class="sub">Zena. Age backwards. Keep track of your progress.</div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-view="practice">Practice</button>
+    <button class="tab-btn" data-view="program">Program</button>
+    <button class="tab-btn" data-view="progress">Progress</button>
+  </div>
+
+  <!-- ===== PRACTICE VIEW ===== -->
+  <div class="view active" id="view-practice">
+    <div class="practice-picker" id="practicePicker"></div>
+    <div class="practice-meta" id="practiceMeta"></div>
+    <div class="gauge-card">
+      <div class="ring-wrap" id="ringWrap">
+        <div class="ring-pulse" id="ringPulse"></div>
+        <svg class="ring" viewBox="0 0 260 260">
+          <circle class="ring-track" cx="130" cy="130" r="115"></circle>
+          <circle id="ringProgress" class="ring-progress" cx="130" cy="130" r="115" stroke-dasharray="722.6" stroke-dashoffset="722.6"></circle>
+        </svg>
+        <div class="ring-center">
+          <div class="phase-label" id="phaseLabel">Ready</div>
+          <div class="time-display" id="timeDisplay">00:00</div>
+          <div class="round-label" id="roundLabel">Round 1 of 3</div>
+          <div class="program-tag" id="programTag" style="display:none;"></div>
+        </div>
+      </div>
+      <p class="hold-explainer" id="holdExplainer">The short 4s steps are only the warm-up. <strong>Your real hold is 90 seconds</strong> — press “I let go now” anytime if you need to.</p>
+      <div class="controls-row">
+        <button class="btn-primary" id="startBtn">Start session</button>
+        <button class="btn-secondary" id="resetBtn">Reset</button>
+      </div>
+      <button class="btn-secondary" id="letGoBtn" style="display:none; width:100%; margin-top:10px; border-color:var(--accent-coral); color:var(--accent-coral);">I let go now</button>
+      <div class="pb-banner" id="pbBanner">🔥 New personal best</div>
+      <div class="share-strip" id="shareStrip">
+        <div class="share-btns">
+          <button class="btn-share" id="shareBtn">Share this hold</button>
+          <button class="btn-challenge" id="challengeBtn">Challenge a friend</button>
+        </div>
+        <div class="share-hint" id="shareHint">Looks great on Stories · one tap</div>
+        <div class="share-preview-wrap" id="sharePreviewWrap">
+          <img id="sharePreviewImg" alt="Share card">
+        </div>
+      </div>
+    </div>
+
+    <div class="settings" id="settingsCard">
+      <div class="setting-full">
+        <div class="setting-row"><div class="setting-label">Hold length</div><div class="setting-value" id="holdValueLabel">40s</div></div>
+        <input type="range" id="holdSlider" min="15" max="120" step="5" value="40">
+      </div>
+      <div class="setting-full">
+        <div class="setting-row"><div class="setting-label">Rounds</div><div class="setting-value" id="roundsValueLabel">3</div></div>
+        <input type="range" id="roundsSlider" min="1" max="5" step="1" value="3">
+      </div>
+      <div class="setting-full">
+        <div class="setting-label">Prep breathing</div>
+        <div class="pattern-picker">
+          <button class="pattern-btn active" data-pattern="box">Box 4-4-4-4</button>
+          <button class="pattern-btn" data-pattern="deep">3 deep breaths</button>
+          <button class="pattern-btn" data-pattern="skip">Skip</button>
+        </div>
+      </div>
+    </div>
+    <div class="chart-sub" id="settingsLocked" style="display:none; text-align:center; margin-top:14px;">Zena+ unlocks Box, Sigh, 4-7-8, Coherent &amp; Extended Exhale — plus custom hold length and rounds.</div>
+
+    <div class="stats-strip" id="practiceStatsStrip">
+      <div class="stat"><div class="stat-value" id="streakStat">0</div><div class="stat-key">Day streak</div></div>
+      <div class="stat"><div class="stat-value" id="totalStat">0</div><div class="stat-key">Sessions</div></div>
+      <div class="stat"><div class="stat-value" id="bestStat">0s</div><div class="stat-key">Best hold</div></div>
+    </div>
+    <div class="chart-sub" id="practiceStatsLocked" style="display:none; text-align:center; margin-top:14px;">Zena+ keeps track of your streak, sessions, and best hold.</div>
+
+    <div class="info">
+      <button class="info-toggle" id="infoToggle"><span>Why 90 seconds actually works</span><span class="chev open" id="infoChev">▾</span></button>
+      <div class="info-body open" id="infoBody">
+        <p><strong>1. More oxygen-carrying blood — for free.</strong> Every hold drops your blood oxygen just enough to trigger a spike in EPO, the exact hormone altitude training and blood doping both chase. EPO tells your bone marrow to churn out more red blood cells. More red blood cells means more oxygen delivered per heartbeat — real endurance gains, no cardio required.</p>
+        <p><strong>2. Your brain stops panicking so easily.</strong> The urge to breathe was never really about oxygen — it's your brain reacting to rising CO₂. Every hold trains your chemoreceptors to tolerate more of it before sounding the alarm. That's the mechanism that lets freedivers go minutes underwater. Trained on land, it shows up as a calmer body under everyday stress.</p>
+        <p><strong>3. Your cells get better at using oxygen.</strong> Mild, repeated oxygen deprivation pushes your mitochondria to become more efficient — the same adaptation altitude camps and interval training chase, delivered while you sit still.</p>
+        <p><strong>4. Better blood flow, down to the capillary.</strong> Low oxygen triggers VEGF, the signal that tells your body to grow new blood vessels. Over weeks, that means better circulation and oxygen delivery to tissue that wasn't getting enough before.</p>
+        <p><strong>5. A nervous system that actually downshifts.</strong> The slow exhale-and-hold pulls you out of fight-or-flight and into rest-and-digest — this is the real mechanism behind the resting heart rate drop you'll see on the Progress tab.</p>
+        <p><strong>6. Growth hormone and stem cell activity — real, but early.</strong> Some studies do show short spikes in growth hormone and circulating stem/progenitor cells after hypoxic exposure. That's a genuine physiological effect. What's not established is that a daily breath hold delivers enough of a dose to treat a specific disease — so take this as a real, well-studied stress-adaptation practice, not a replacement for medical care.</p>
+        <div class="safety">
+          <div class="safety-title">Safety first</div>
+          <p>Never practice breath holds in or near water, while driving, or standing up. Sit or lie down. Stop immediately if lightheaded or dizzy. Skip this if pregnant or if you have a cardiovascular, respiratory, or seizure condition — check with a doctor first. Not medical advice.</p>
+        </div>
+      </div>
+    </div>
+    <footer>ZENA.LTD · BREATH TRAINING</footer>
+  </div>
+
+  <!-- ===== PROGRAM VIEW ===== -->
+  <div class="view" id="view-program">
+    <div class="program-hero">
+      <h2>8-Week Hold Progression</h2>
+      <p id="programIntroText">A CO₂ tolerance table, the kind freedivers use to build breath-hold capacity gradually. Week 1 starts around 20–30 seconds — genuinely comfortable for a first-timer — and nudges up each week toward a sustainable ~90-second daily hold by week 8, without straining. From there, week 8 becomes your ongoing maintenance level, not a finish line. Zena sets today's practice length for you automatically while a program is active.</p>
+      <button class="btn-primary" id="programStartBtn" style="width:100%;">Start 8-week program</button>
+    </div>
+    <div class="program-hero" id="programWeeksCard" style="display:none;">
+      <h2 id="programStatusHeading">Day 1 of 56 · Week 1</h2>
+      <p id="programStatusSub">Today's target: 20s · 3 rounds</p>
+      <div class="week-list" id="weekList"></div>
+      <button class="btn-secondary" id="programStopBtn" style="width:100%; margin-top:14px;">Stop program</button>
+    </div>
+  </div>
+
+  <!-- ===== PROGRESS VIEW ===== -->
+  <div class="view" id="view-progress">
+    <div class="chart-card" id="upgradeCard">
+      <h3>Zena+</h3>
+      <div class="chart-sub" id="upgradeCardCopy">Everything in free, plus five guided practices — each with its own timer, animations, and progress tracking.</div>
+      <ul class="offer-list">
+        <li><div class="oi">⬜</div><div class="ot">Box Breathing<span>Focus &amp; steady nerves · 4-4-4-4</span></div></li>
+        <li><div class="oi">😮‍💨</div><div class="ot">Physiological Sigh<span>Fast stress relief · double inhale + long exhale</span></div></li>
+        <li><div class="oi">🌙</div><div class="ot">4-7-8 Relax<span>Wind down · sleep &amp; anxiety</span></div></li>
+        <li><div class="oi">💚</div><div class="ot">Coherent Breathing<span>HRV balance · ~5.5s in / 5.5s out</span></div></li>
+        <li><div class="oi">🌊</div><div class="ot">Extended Exhale<span>Downshift the nervous system</span></div></li>
+      </ul>
+      <div class="offer-extra">
+        Also included: <strong>8-week hold program</strong>, custom hold length &amp; rounds, resting heart-rate trends, badges, and per-practice streaks.
+      </div>
+      <div class="controls-row" style="margin-top:14px;">
+        <a class="btn-primary" style="text-decoration:none; display:flex; align-items:center; justify-content:center;"
+           href="https://REPLACE-WITH-YOUR-PADDLE-CHECKOUT-LINK-MONTHLY" target="_blank" rel="noopener">
+           $5.99<span style="font-size:11px; opacity:0.7; margin-left:3px;">/mo</span>
+        </a>
+        <a class="btn-secondary" style="text-decoration:none; display:flex; align-items:center; justify-content:center;"
+           href="https://REPLACE-WITH-YOUR-PADDLE-CHECKOUT-LINK-ANNUAL" target="_blank" rel="noopener">
+           $49.99<span style="font-size:11px; opacity:0.7; margin-left:3px;">/yr</span>
+        </a>
+      </div>
+    </div>
+
+    <div id="proProgressContent">
+      <div class="stats-strip" style="margin-top:0;">
+        <div class="stat"><div class="stat-value" id="streakStat2">0</div><div class="stat-key">Day streak</div></div>
+        <div class="stat"><div class="stat-value" id="totalStat2">0</div><div class="stat-key">Sessions</div></div>
+        <div class="stat"><div class="stat-value" id="bestStat2">0s</div><div class="stat-key">Best hold</div></div>
+      </div>
+
+      <div class="chart-card" style="margin-top:16px;">
+        <h3>All practices</h3>
+        <div class="chart-sub">Sessions logged per technique (Zena+)</div>
+        <div class="practice-stats-grid" id="practiceStatsGrid"></div>
+      </div>
+
+      <div class="chart-card" style="margin-top:16px;">
+        <h3>Badges</h3>
+        <div class="chart-sub">Unlock and share milestones</div>
+        <div class="badges-row" id="badgesRow"></div>
+        <button class="btn-secondary measure-btn" id="shareProgressBtn" style="margin-top:14px;">Share my progress</button>
+      </div>
+
+      <div class="chart-card">
+        <h3>Resting heart rate</h3>
+        <div class="chart-sub">Measured before each session, over time</div>
+        <canvas id="hrChart" width="440" height="140"></canvas>
+        <div class="hr-empty" id="hrEmpty">No readings yet — measure your heart rate before your next session.</div>
+        <button class="btn-primary measure-btn" id="measureBtn">Measure heart rate</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<canvas id="confettiCanvas"></canvas>
+<canvas id="shareCardCanvas" width="720" height="900" style="display:none;"></canvas>
+
+<div class="milestone-toast" id="milestoneToast">
+  <div class="mt-title" id="mtTitle">Badge unlocked</div>
+  <div class="mt-sub" id="mtSub"></div>
+  <button class="mt-share" id="mtShareBtn">Share this win</button>
+</div>
+
+<!-- ===== HR MODAL ===== -->
+<div class="modal-overlay" id="hrModal">
+  <div class="modal">
+    <h3>Measure heart rate</h3>
+    <p>Cover your rear camera lens gently with a fingertip. Hold still. If your camera won't cooperate, enter it manually below.</p>
+    <video id="camPreview" autoplay playsinline muted></video>
+    <div class="hr-reading" id="hrReading">--</div>
+    <div class="hr-status" id="hrStatus">Ready to measure</div>
+    <button class="btn-primary" id="camStartBtn" style="width:100%;">Start camera measurement</button>
+    <div class="manual-row">
+      <input type="number" id="manualHr" placeholder="Or enter BPM manually" min="30" max="220">
+      <button class="btn-secondary" id="manualSaveBtn">Save</button>
+    </div>
+    <button class="btn-secondary modal-close" id="hrModalClose" style="width:100%;">Close</button>
+  </div>
+</div>
+
+<script>
+// ================= PROGRAM DATA =================
+const PROGRAM_WEEKS = [
+  { week:1, min:20, max:30, rounds:3 },
+  { week:2, min:25, max:35, rounds:3 },
+  { week:3, min:30, max:40, rounds:3 },
+  { week:4, min:35, max:45, rounds:4 },
+  { week:5, min:42, max:55, rounds:4 },
+  { week:6, min:52, max:66, rounds:4 },
+  { week:7, min:64, max:80, rounds:5 },
+  { week:8, min:78, max:95, rounds:5 },
+];
+const PROGRAM_TOTAL_DAYS = 56;
+const PROGRAM_START_TARGET = 20;
+const PROGRAM_END_TARGET = 90;
+// A smooth day-by-day target, not a weekly jump — every single day nudges up
+// a little from the last, so nobody strains to leap from 45s to 60s overnight.
+function dayTarget(dayIndex){
+  const d = Math.min(Math.max(dayIndex,0), PROGRAM_TOTAL_DAYS-1);
+  const raw = PROGRAM_START_TARGET + (PROGRAM_END_TARGET - PROGRAM_START_TARGET) * (d/(PROGRAM_TOTAL_DAYS-1));
+  return Math.round(raw/5)*5; // round to nearest 5s so it reads cleanly
+}
+function dayRounds(dayIndex){
+  const d = Math.min(Math.max(dayIndex,0), PROGRAM_TOTAL_DAYS-1);
+  if(d < 21) return 3;
+  if(d < 35) return 4;
+  return 5;
+}
+
+// ================= PRACTICES (free = hold only; Pro unlocks all 6) =================
+// 1 free: Breath Hold. 5 additional Pro practices with full logging + animations.
+const PRACTICES = {
+  hold: {
+    id: 'hold', name: 'Breath Hold', short: 'Hold', icon: '🫁', pro: false,
+    blurb: 'CO₂ tolerance · EPO · calm under pressure',
+    color: '#35C9C1',
+    hasHoldButton: true,
+    settings: ['hold','rounds','prep'],
+  },
+  box: {
+    id: 'box', name: 'Box Breathing', short: 'Box', icon: '⬜', pro: true,
+    blurb: 'Focus & steady nerves · 4-4-4-4',
+    color: '#5C9EE0',
+    hasHoldButton: false,
+    settings: ['rounds'],
+    defaultRounds: 4,
+  },
+  sigh: {
+    id: 'sigh', name: 'Physiological Sigh', short: 'Sigh', icon: '😮‍💨', pro: true,
+    blurb: 'Fast stress relief · double inhale + long exhale',
+    color: '#FF8B61',
+    hasHoldButton: false,
+    settings: ['rounds'],
+    defaultRounds: 3,
+  },
+  four78: {
+    id: 'four78', name: '4-7-8 Relax', short: '4-7-8', icon: '🌙', pro: true,
+    blurb: 'Wind down · sleep & anxiety',
+    color: '#A78BFA',
+    hasHoldButton: false,
+    settings: ['rounds'],
+    defaultRounds: 4,
+  },
+  coherent: {
+    id: 'coherent', name: 'Coherent Breathing', short: 'Coherent', icon: '💚', pro: true,
+    blurb: 'HRV balance · ~5.5s in / 5.5s out',
+    color: '#34D399',
+    hasHoldButton: false,
+    settings: ['rounds'],
+    defaultRounds: 6,
+  },
+  exhale: {
+    id: 'exhale', name: 'Extended Exhale', short: 'Exhale', icon: '🌊', pro: true,
+    blurb: 'Downshift the nervous system · longer out-breath',
+    color: '#F472B6',
+    hasHoldButton: false,
+    settings: ['rounds'],
+    defaultRounds: 5,
+  },
+};
+
+// ================= STATE =================
+let holdDuration = 40;
+let totalRounds = 3;
+let prepPattern = 'box';
+let currentPractice = 'hold';
+let phaseQueue = [];
+let currentPhaseIndex = 0;
+let remaining = 0;
+let phaseTotal = 0;
+let timerId = null;
+let currentRound = 1;
+let holdActuals = []; // actual seconds held per round (hold practice only)
+let programState = null; // { startDate, dailyLog: {} }
+let isPro = false; // gates Program + Progress tracking behind Zena+ — see applyGating()
+let practiceStats = {}; // { [practiceId]: { sessions, lastDate, streak, bestHold? } }
+
+// window.storage only exists inside Claude's artifact sandbox — this wrapper
+// uses localStorage instead so streaks/program/HR data persist on any real
+// hosted page (falls back to window.storage automatically if present).
+const storage = {
+  async get(key){
+    if(window.storage) return window.storage.get(key, false);
+    try{
+      const v = localStorage.getItem('zena_'+key);
+      return v === null ? null : { key, value: v };
+    }catch(e){ return null; }
+  },
+  async set(key, value){
+    if(window.storage) return window.storage.set(key, value, false);
+    try{ localStorage.setItem('zena_'+key, value); return { key, value }; }
+    catch(e){ return null; }
+  }
+};
+
+// ================= GATING (free timer vs Zena+ tracking) =================
+// isPro is NOT real entitlement verification — no backend exists yet to
+// confirm a payment. This only controls what's shown in the UI. Wire this
+// up to a real check (license key / webhook-issued token) before launch,
+// or anyone can flip it via the dev toggle below.
+async function loadPro(){
+  try{
+    const r = await storage.get('zena-pro');
+    isPro = !!(r && r.value === 'true');
+  }catch(e){ isPro = false; }
+}
+async function savePro(){
+  try{ await storage.set('zena-pro', isPro ? 'true' : 'false'); }catch(e){}
+}
+function applyGating(){
+  el.practiceStatsStrip.style.display = isPro ? 'flex' : 'none';
+  el.practiceStatsLocked.style.display = isPro ? 'none' : 'block';
+  el.settingsCard.style.display = isPro ? 'block' : 'none';
+  el.settingsLocked.style.display = isPro ? 'none' : 'block';
+  el.upgradeCard.style.display = isPro ? 'none' : 'block';
+  el.proProgressContent.style.display = isPro ? 'block' : 'none';
+  el.programStartBtn.textContent = isPro ? 'Start 8-week program' : 'Unlock 8-week program — Zena+';
+  if(!isPro){
+    currentPractice = 'hold';
+    if(!programState){
+      holdDuration = 90; totalRounds = 1; prepPattern = 'box';
+      document.querySelectorAll('.pattern-btn').forEach(b=>b.classList.toggle('active', b.dataset.pattern==='box'));
+      el.roundLabel.textContent = 'Round 1 of 1';
+    }
+  }
+  renderPracticePicker();
+  applyPracticeUI();
+  updateHoldExplainer();
+  renderPracticeStatsGrid();
+  if(!isPro && document.getElementById('view-progress').classList.contains('active')) drawHrChart();
+}
+
+function renderPracticePicker(){
+  if(!el.practicePicker) return;
+  el.practicePicker.innerHTML = '';
+  el.practicePicker.classList.toggle('visible', true);
+  Object.values(PRACTICES).forEach(pr=>{
+    const locked = pr.pro && !isPro;
+    const btn = document.createElement('button');
+    btn.className = 'practice-chip' + (pr.id === currentPractice ? ' active' : '') + (locked ? ' locked' : '');
+    btn.dataset.id = pr.id;
+    btn.innerHTML = `
+      <span class="chip-icon">${pr.icon || '•'}</span>
+      <span class="chip-label">${pr.short}</span>
+      ${locked ? '<span class="chip-lock">🔒</span>' : ''}
+    `;
+    btn.title = locked ? (pr.name + ' — unlock with Zena+') : (pr.name + ' · ' + pr.blurb);
+    btn.addEventListener('click', ()=>{
+      if(locked){
+        // Jump to Progress tab so they see the full offer
+        document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+        document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+        const progTab = document.querySelector('.tab-btn[data-view="progress"]');
+        if(progTab) progTab.classList.add('active');
+        document.getElementById('view-progress').classList.add('active');
+        const card = document.getElementById('upgradeCard');
+        if(card){ card.style.transition='box-shadow 0.3s'; card.style.boxShadow='0 0 0 2px var(--accent-teal), 0 12px 40px -10px rgba(53,201,193,0.35)'; setTimeout(()=>card.style.boxShadow='', 1600); }
+        return;
+      }
+      selectPractice(pr.id);
+    });
+    el.practicePicker.appendChild(btn);
+  });
+}
+
+function selectPractice(id){
+  if(!PRACTICES[id]) return;
+  if(PRACTICES[id].pro && !isPro) return;
+  // Don't switch mid-session
+  if(el.startBtn.textContent === 'Pause' || el.startBtn.textContent === 'Resume') return;
+  currentPractice = id;
+  const pr = PRACTICES[id];
+  if(pr.defaultRounds) totalRounds = pr.defaultRounds;
+  if(id === 'hold' && !isPro && !programState){ totalRounds = 1; holdDuration = 90; }
+  else if(id === 'hold' && isPro && !programState){ totalRounds = 3; }
+  applyPracticeUI();
+  renderPracticePicker();
+  resetSession();
+}
+
+function applyPracticeUI(){
+  const pr = PRACTICES[currentPractice] || PRACTICES.hold;
+  // Settings visibility (Pro only overall; then per-practice)
+  if(el.settingsCard){
+    const showHold = isPro && pr.settings.includes('hold') && !programState;
+    const showRounds = isPro && pr.settings.includes('rounds') && !(currentPractice==='hold' && programState);
+    const showPrep = isPro && pr.settings.includes('prep') && !programState;
+    const holdBlock = el.settingsCard.querySelectorAll('.setting-full')[0];
+    const roundsBlock = el.settingsCard.querySelectorAll('.setting-full')[1];
+    const prepBlock = el.settingsCard.querySelectorAll('.setting-full')[2];
+    if(holdBlock) holdBlock.style.display = showHold ? 'block' : 'none';
+    if(roundsBlock) roundsBlock.style.display = showRounds ? 'block' : 'none';
+    if(prepBlock) prepBlock.style.display = showPrep ? 'block' : 'none';
+  }
+  if(el.practiceMeta){
+    el.practiceMeta.classList.add('visible');
+    el.practiceMeta.textContent = pr.name.toUpperCase() + ' · ' + pr.blurb;
+  }
+  if(el.roundsValueLabel) el.roundsValueLabel.textContent = totalRounds;
+  if(el.roundsSlider) el.roundsSlider.value = totalRounds;
+  el.roundLabel.textContent = `Round 1 of ${totalRounds}`;
+  // Theme accent on ring default
+  el.ringProgress.style.stroke = pr.color;
+  updateHoldExplainer();
+}
+// TEMPORARY dev toggle for previewing both tiers before checkout is wired up:
+// tap the "Zena" title 5 times within 3 seconds to flip isPro. Remove this
+// once real payment verification is in place.
+let titleTaps = [];
+document.querySelector('header h1').addEventListener('click', async ()=>{
+  const now = Date.now();
+  titleTaps = titleTaps.filter(t => now-t < 3000);
+  titleTaps.push(now);
+  if(titleTaps.length >= 5){
+    titleTaps = [];
+    isPro = !isPro;
+    await savePro();
+    applyGating();
+  }
+});
+
+const el = {};
+['phaseLabel','timeDisplay','roundLabel','programTag','ringProgress','ringWrap','ringPulse','startBtn','resetBtn','letGoBtn',
+ 'holdSlider','holdValueLabel','roundsSlider','roundsValueLabel',
+ 'streakStat','totalStat','bestStat','streakStat2','totalStat2','bestStat2',
+ 'practiceStatsStrip','practiceStatsLocked','settingsCard','settingsLocked','upgradeCard','upgradeCardCopy','proProgressContent',
+ 'infoToggle','infoBody','infoChev',
+ 'programStartBtn','programWeeksCard','programStatusHeading','programStatusSub','weekList','programStopBtn',
+ 'hrChart','hrEmpty','measureBtn','hrModal','camPreview','hrReading','hrStatus','camStartBtn','manualHr','manualSaveBtn','hrModalClose',
+ 'shareStrip','shareBtn','challengeBtn','shareHint','pbBanner','sharePreviewWrap','sharePreviewImg',
+ 'badgesRow','shareProgressBtn','milestoneToast','mtTitle','mtSub','mtShareBtn','holdExplainer',
+ 'practicePicker','practiceMeta','practiceStatsGrid'
+].forEach(id => el[id] = document.getElementById(id));
+
+function updateHoldExplainer(){
+  if(!el.holdExplainer) return;
+  if(currentPractice === 'hold'){
+    const secs = holdDuration;
+    el.holdExplainer.innerHTML = `The short 4s steps are only the warm-up. <strong>Your real hold is ${secs} seconds</strong> — press “I let go now” anytime if you need to.`;
+    el.holdExplainer.style.display = 'block';
+  } else {
+    const pr = PRACTICES[currentPractice];
+    const tips = {
+      box: 'Equal sides calm the mind. Follow inhale → hold → exhale → hold empty.',
+      sigh: 'Double inhale fills the lungs; the long exhale is what dumps stress.',
+      four78: 'Inhale 4 · hold 7 · exhale 8. Best seated or lying down before sleep.',
+      coherent: 'Smooth 5s in, 5s out. No force — aim for a gentle rhythm.',
+      exhale: 'Make the out-breath longer than the in-breath to downshift.',
+    };
+    el.holdExplainer.innerHTML = tips[currentPractice] || (pr ? pr.blurb : '');
+    el.holdExplainer.style.display = 'block';
+  }
+}
+
+// ================= VIRAL / SHARE =================
+const APP_URL = 'https://zena.ltd';
+const MILESTONES = [
+  { id:'first_session', label:'First hold', check: d => (d.totalSessions||0) >= 1 },
+  { id:'streak_3', label:'3-day streak', check: d => (d.streak||0) >= 3 },
+  { id:'streak_7', label:'7-day streak', check: d => (d.streak||0) >= 7 },
+  { id:'streak_30', label:'30-day streak', check: d => (d.streak||0) >= 30 },
+  { id:'hold_45', label:'45s hold', check: d => (d.bestHold||0) >= 45 },
+  { id:'hold_60', label:'60s hold', check: d => (d.bestHold||0) >= 60 },
+  { id:'hold_90', label:'90s hold', check: d => (d.bestHold||0) >= 90 },
+  { id:'sessions_10', label:'10 sessions', check: d => (d.totalSessions||0) >= 10 },
+  { id:'sessions_30', label:'30 sessions', check: d => (d.totalSessions||0) >= 30 },
+];
+let unlockedBadges = [];
+let lastSharePayload = null;
+let pendingMilestone = null;
+
+async function loadBadges(){
+  try{
+    const r = await storage.get('zena-badges');
+    if(r && r.value) unlockedBadges = JSON.parse(r.value);
+  }catch(e){}
+  renderBadges();
+}
+async function saveBadges(){
+  try{ await storage.set('zena-badges', JSON.stringify(unlockedBadges)); }catch(e){}
+}
+function renderBadges(newIds){
+  if(!el.badgesRow) return;
+  el.badgesRow.innerHTML = '';
+  MILESTONES.forEach(m=>{
+    const unlocked = unlockedBadges.includes(m.id);
+    const chip = document.createElement('div');
+    chip.className = 'badge-chip' + (unlocked ? ' unlocked' : '') + (newIds && newIds.includes(m.id) ? ' new' : '');
+    chip.textContent = unlocked ? '✓ ' + m.label : m.label;
+    el.badgesRow.appendChild(chip);
+  });
+}
+async function checkMilestones(stats){
+  const newly = [];
+  MILESTONES.forEach(m=>{
+    if(!unlockedBadges.includes(m.id) && m.check(stats)){
+      unlockedBadges.push(m.id);
+      newly.push(m.id);
+    }
+  });
+  if(newly.length){
+    await saveBadges();
+    renderBadges(newly);
+    const first = MILESTONES.find(m => m.id === newly[0]);
+    if(first) showMilestoneToast(first, stats);
+  }
+}
+function showMilestoneToast(milestone, stats){
+  pendingMilestone = { milestone, stats };
+  el.mtTitle.textContent = '🏅 ' + milestone.label;
+  el.mtSub.textContent = 'You just unlocked a badge. Share it before the glow fades.';
+  el.milestoneToast.classList.add('show');
+  setTimeout(()=> el.milestoneToast.classList.remove('show'), 8000);
+}
+el.mtShareBtn.addEventListener('click', ()=>{
+  el.milestoneToast.classList.remove('show');
+  if(pendingMilestone){
+    const s = pendingMilestone.stats || {};
+    shareCard({
+      title: pendingMilestone.milestone.label,
+      subtitle: 'Badge unlocked on Zena',
+      hold: s.bestHold || 0,
+      streak: s.streak || 0,
+      sessions: s.totalSessions || 0,
+      kind: 'badge'
+    });
+  }
+});
+
+function drawShareCard(opts){
+  const canvas = document.getElementById('shareCardCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = 720, H = 900;
+  // background
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0, '#0d2c40');
+  g.addColorStop(0.55, '#071620');
+  g.addColorStop(1, '#051018');
+  ctx.fillStyle = g;
+  ctx.fillRect(0,0,W,H);
+  // subtle radial
+  const rg = ctx.createRadialGradient(W/2, 180, 20, W/2, 200, 320);
+  rg.addColorStop(0, 'rgba(53,201,193,0.18)');
+  rg.addColorStop(1, 'rgba(53,201,193,0)');
+  ctx.fillStyle = rg;
+  ctx.fillRect(0,0,W,H);
+  // brand
+  ctx.fillStyle = '#35C9C1';
+  ctx.font = '500 22px IBM Plex Mono, monospace';
+  ctx.textAlign = 'center';
+  ctx.letterSpacing = '0.2em';
+  ctx.fillText('ZENA.LTD', W/2, 64);
+  // main number
+  const hold = opts.hold || 0;
+  ctx.fillStyle = '#EAF4F4';
+  ctx.font = '700 120px Space Grotesk, sans-serif';
+  ctx.fillText(hold + 's', W/2, 280);
+  // label
+  ctx.fillStyle = '#35C9C1';
+  ctx.font = '600 28px Space Grotesk, sans-serif';
+  ctx.fillText(opts.title || 'Breath hold', W/2, 340);
+  if(opts.subtitle){
+    ctx.fillStyle = '#7FA4B8';
+    ctx.font = '400 20px IBM Plex Sans, sans-serif';
+    ctx.fillText(opts.subtitle, W/2, 378);
+  }
+  // stats row
+  const y = 480;
+  ctx.strokeStyle = '#1C3B52';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(80, y-40); ctx.lineTo(W-80, y-40); ctx.stroke();
+  const items = [
+    { v: String(opts.streak||0), k: 'DAY STREAK' },
+    { v: String(opts.sessions||0), k: 'SESSIONS' },
+    { v: (opts.best || opts.hold || 0) + 's', k: 'BEST HOLD' },
+  ];
+  items.forEach((it, i)=>{
+    const x = 140 + i * 220;
+    ctx.fillStyle = '#35C9C1';
+    ctx.font = '700 36px Space Grotesk, sans-serif';
+    ctx.fillText(it.v, x, y);
+    ctx.fillStyle = '#7FA4B8';
+    ctx.font = '500 14px IBM Plex Mono, monospace';
+    ctx.fillText(it.k, x, y+28);
+  });
+  // tagline
+  ctx.fillStyle = '#7FA4B8';
+  ctx.font = '400 22px IBM Plex Sans, sans-serif';
+  ctx.fillText('Age backwards. One hold at a time.', W/2, 620);
+  // CTA
+  ctx.fillStyle = 'rgba(53,201,193,0.12)';
+  roundRect(ctx, 160, 700, 400, 64, 16);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(53,201,193,0.4)';
+  ctx.lineWidth = 1.5;
+  roundRect(ctx, 160, 700, 400, 64, 16);
+  ctx.stroke();
+  ctx.fillStyle = '#35C9C1';
+  ctx.font = '600 24px Space Grotesk, sans-serif';
+  ctx.fillText('Try it free → zena.ltd', W/2, 742);
+  // footer
+  ctx.fillStyle = '#4a6a7a';
+  ctx.font = '400 16px IBM Plex Mono, monospace';
+  ctx.fillText('Breath training · CO₂ tolerance', W/2, 850);
+  return canvas;
+}
+function roundRect(ctx, x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
+}
+async function shareCard(opts){
+  lastSharePayload = opts;
+  const canvas = drawShareCard(opts);
+  const dataUrl = canvas.toDataURL('image/png');
+  if(el.sharePreviewImg){
+    el.sharePreviewImg.src = dataUrl;
+    el.sharePreviewWrap.classList.add('visible');
+  }
+  const text = opts.kind === 'badge'
+    ? `Just unlocked “${opts.title}” on Zena — ${opts.hold}s best hold, ${opts.streak}-day streak. Age backwards 🫁 ${APP_URL}`
+    : opts.kind === 'challenge'
+    ? `I just held my breath for ${opts.hold}s on Zena. Can you beat it? ${APP_URL}`
+    : `Held ${opts.hold}s today on Zena · ${opts.streak}-day streak. Building CO₂ tolerance one hold at a time 🫁 ${APP_URL}`;
+
+  // Prefer native share with file when possible
+  try{
+    const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+    const file = new File([blob], 'zena-hold.png', { type: 'image/png' });
+    if(navigator.share && navigator.canShare && navigator.canShare({ files: [file] })){
+      await navigator.share({ files: [file], title: 'Zena', text });
+      return;
+    }
+    if(navigator.share){
+      await navigator.share({ title: 'Zena', text, url: APP_URL });
+      return;
+    }
+  }catch(e){
+    if(e && e.name === 'AbortError') return;
+  }
+  // Fallback: copy text + show preview so user can screenshot/save
+  try{
+    await navigator.clipboard.writeText(text);
+    if(el.shareHint) el.shareHint.textContent = 'Copied to clipboard · long-press image to save';
+  }catch(e){
+    if(el.shareHint) el.shareHint.textContent = 'Long-press the card to save · tag @zena';
+  }
+}
+function showShareStrip(sessionBest, stats, isPB){
+  el.shareStrip.classList.add('visible');
+  if(isPB) el.pbBanner.classList.add('visible');
+  else el.pbBanner.classList.remove('visible');
+  lastSharePayload = {
+    title: isPB ? 'New personal best' : 'Today’s hold',
+    subtitle: isPB ? 'Personal record' : 'Session complete',
+    hold: sessionBest,
+    streak: stats.streak || 0,
+    sessions: stats.totalSessions || 0,
+    best: stats.bestHold || sessionBest,
+    kind: isPB ? 'pb' : 'session'
+  };
+  // Pre-render preview
+  const canvas = drawShareCard(lastSharePayload);
+  el.sharePreviewImg.src = canvas.toDataURL('image/png');
+  el.sharePreviewWrap.classList.add('visible');
+  el.shareHint.textContent = 'Looks great on Stories · one tap';
+}
+function hideShareStrip(){
+  el.shareStrip.classList.remove('visible');
+  el.pbBanner.classList.remove('visible');
+  el.sharePreviewWrap.classList.remove('visible');
+}
+el.shareBtn.addEventListener('click', ()=>{
+  if(lastSharePayload) shareCard(lastSharePayload);
+});
+el.challengeBtn.addEventListener('click', ()=>{
+  const p = lastSharePayload || { hold: 0, streak: 0, sessions: 0 };
+  shareCard({
+    title: 'Beat my hold',
+    subtitle: 'Challenge from a friend',
+    hold: p.hold || p.best || 0,
+    streak: p.streak || 0,
+    sessions: p.sessions || 0,
+    best: p.best || p.hold || 0,
+    kind: 'challenge'
+  });
+});
+if(el.shareProgressBtn){
+  el.shareProgressBtn.addEventListener('click', async ()=>{
+    let stats = { totalSessions:0, bestHold:0, streak:0 };
+    try{
+      const r = await storage.get('breath-hold-stats');
+      if(r && r.value) stats = JSON.parse(r.value);
+    }catch(e){}
+    shareCard({
+      title: 'My Zena progress',
+      subtitle: 'Breath training streak',
+      hold: stats.bestHold || 0,
+      streak: stats.streak || 0,
+      sessions: stats.totalSessions || 0,
+      best: stats.bestHold || 0,
+      kind: 'progress'
+    });
+  });
+}
+
+const CIRC = 2 * Math.PI * 115;
+const PHASE_COLORS = { prep:'#FF8B61', exhale:'#5C9EE0', hold:'#35C9C1', recovery:'#5C9EE0' };
+
+// ================= TABS =================
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('view-'+btn.dataset.view).classList.add('active');
+    if(btn.dataset.view === 'progress') drawHrChart();
+  });
+});
+
+// ================= CONFETTI =================
+function launchConfetti(){
+  const canvas = document.getElementById('confettiCanvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const colors = ['#35C9C1','#FF8B61','#5C9EE0','#5eead4','#EAF4F4','#FFB347'];
+  const pieces = Array.from({length: 70}, () => ({
+    x: Math.random() * canvas.width,
+    y: -20 - Math.random() * 80,
+    w: 6 + Math.random() * 6,
+    h: 8 + Math.random() * 8,
+    vx: (Math.random() - 0.5) * 4,
+    vy: 2 + Math.random() * 4,
+    rot: Math.random() * Math.PI,
+    vr: (Math.random() - 0.5) * 0.2,
+    color: colors[Math.floor(Math.random() * colors.length)],
+    life: 1
+  }));
+  let frame = 0;
+  function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    pieces.forEach(p=>{
+      p.x += p.vx; p.y += p.vy; p.vy += 0.06; p.rot += p.vr; p.life -= 0.012;
+      if(p.life <= 0) return;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.globalAlpha = Math.max(0, p.life);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+      ctx.restore();
+    });
+    frame++;
+    if(frame < 110) requestAnimationFrame(draw);
+    else ctx.clearRect(0,0,canvas.width,canvas.height);
+  }
+  requestAnimationFrame(draw);
+}
+
+function pulseStat(node){
+  if(!node) return;
+  node.classList.remove('pop');
+  void node.offsetWidth;
+  node.classList.add('pop');
+  setTimeout(()=> node.classList.remove('pop'), 400);
+}
+
+function setPulseClass(phaseName){
+  if(!el.ringPulse) return;
+  el.ringPulse.className = 'ring-pulse';
+  if(phaseName === 'prep') el.ringPulse.classList.add('inhale');
+  else if(phaseName === 'hold') el.ringPulse.classList.add('hold');
+  else if(phaseName === 'exhale' || phaseName === 'recovery') el.ringPulse.classList.add(phaseName === 'exhale' ? 'exhale' : 'recovery');
+}
+
+function animatePhaseLabel(text){
+  el.phaseLabel.classList.add('phase-enter');
+  setTimeout(()=>{
+    el.phaseLabel.textContent = text;
+    el.phaseLabel.classList.remove('phase-enter');
+  }, 160);
+}
+
+// ================= AUDIO =================
+let audioCtx = null;
+function chime(freq=660, dur=0.18){
+  try{
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+    osc.frequency.value = freq; osc.type='sine';
+    gain.gain.setValueAtTime(0.001, audioCtx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.15, audioCtx.currentTime+0.02);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+dur);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime+dur+0.02);
+  }catch(e){}
+}
+
+// ================= TIMER LOGIC =================
+function buildRoundPhases(){
+  const phases = [];
+  const p = currentPractice;
+
+  if(p === 'hold'){
+    if(prepPattern === 'box'){
+      for(let i=0;i<4;i++){
+        phases.push({name:'prep', label:'Inhale', seconds:4});
+        phases.push({name:'prep', label:'Hold', seconds:4});
+        phases.push({name:'prep', label:'Exhale', seconds:4});
+        phases.push({name:'prep', label:'Hold', seconds:4});
+      }
+    } else if(prepPattern === 'deep'){
+      for(let i=0;i<3;i++){
+        phases.push({name:'prep', label:'Deep inhale', seconds:4});
+        phases.push({name:'prep', label:'Full exhale', seconds:4});
+      }
+    }
+    phases.push({name:'exhale', label:'Exhale fully', seconds:4});
+    phases.push({name:'hold', label:'Hold', seconds:holdDuration});
+    phases.push({name:'recovery', label:'Recovery breath', seconds:8});
+    return phases;
+  }
+
+  if(p === 'box'){
+    // One round = one full box cycle
+    phases.push({name:'prep', label:'Inhale', seconds:4});
+    phases.push({name:'hold', label:'Hold', seconds:4});
+    phases.push({name:'exhale', label:'Exhale', seconds:4});
+    phases.push({name:'recovery', label:'Hold empty', seconds:4});
+    return phases;
+  }
+
+  if(p === 'sigh'){
+    // Physiological sigh: double inhale + long exhale
+    phases.push({name:'prep', label:'Inhale', seconds:2});
+    phases.push({name:'prep', label:'Top-up inhale', seconds:1});
+    phases.push({name:'exhale', label:'Long exhale', seconds:6});
+    return phases;
+  }
+
+  if(p === 'four78'){
+    phases.push({name:'prep', label:'Inhale', seconds:4});
+    phases.push({name:'hold', label:'Hold', seconds:7});
+    phases.push({name:'exhale', label:'Exhale', seconds:8});
+    return phases;
+  }
+
+  if(p === 'coherent'){
+    phases.push({name:'prep', label:'Inhale', seconds:5});
+    phases.push({name:'exhale', label:'Exhale', seconds:5});
+    return phases;
+  }
+
+  if(p === 'exhale'){
+    phases.push({name:'prep', label:'Inhale', seconds:4});
+    phases.push({name:'exhale', label:'Long exhale', seconds:8});
+    return phases;
+  }
+
+  return phases;
+}
+function fmt(s){ const m=Math.floor(s/60).toString().padStart(2,'0'); const sec=Math.floor(s%60).toString().padStart(2,'0'); return m+':'+sec; }
+function setRing(fraction, color){
+  el.ringProgress.style.strokeDashoffset = CIRC*(1-fraction);
+  el.ringProgress.style.stroke = color;
+  el.phaseLabel.style.color = color;
+  el.ringProgress.style.filter = `drop-shadow(0 0 ${6 + fraction*8}px ${color}88)`;
+}
+function showLetGo(show){
+  if(show){
+    el.letGoBtn.style.display = 'block';
+    requestAnimationFrame(()=> el.letGoBtn.classList.add('visible'));
+  } else {
+    el.letGoBtn.classList.remove('visible');
+    setTimeout(()=>{ if(!el.letGoBtn.classList.contains('visible')) el.letGoBtn.style.display='none'; }, 380);
+  }
+}
+function lightHaptic(ms=12){
+  try{ if(navigator.vibrate) navigator.vibrate(ms); }catch(e){}
+}
+
+function startPhase(){
+  if(currentPhaseIndex >= phaseQueue.length){
+    if(currentRound >= totalRounds){ finishSession(); return; }
+    currentRound++; currentPhaseIndex = 0; phaseQueue = buildRoundPhases();
+  }
+  const phase = phaseQueue[currentPhaseIndex];
+  phaseTotal = phase.seconds; remaining = phase.seconds;
+  animatePhaseLabel(phase.label);
+  el.roundLabel.textContent = `Round ${currentRound} of ${totalRounds}`;
+  setPulseClass(phase.name);
+  const showHoldBtn = (currentPractice === 'hold' && phase.name === 'hold');
+  showLetGo(showHoldBtn);
+  chime(phase.name === 'hold' ? 520 : 780);
+  lightHaptic(phase.name === 'hold' ? 18 : 10);
+  el.ringWrap.classList.remove('complete');
+  el.timeDisplay.classList.remove('complete');
+  tick();
+}
+function tick(){
+  el.timeDisplay.textContent = fmt(remaining);
+  el.timeDisplay.classList.add('tick');
+  setTimeout(()=> el.timeDisplay.classList.remove('tick'), 180);
+  const phase = phaseQueue[currentPhaseIndex];
+  setRing(remaining/phaseTotal, PHASE_COLORS[phase.name] || PHASE_COLORS.prep);
+  if(remaining <= 0){
+    if(phase.name === 'hold') holdActuals.push(phaseTotal);
+    showLetGo(false);
+    currentPhaseIndex++; startPhase(); return;
+  }
+  timerId = setTimeout(()=>{ remaining -= 1; tick(); }, 1000);
+}
+function finishSession(){
+  clearTimeout(timerId);
+  const sessionBest = holdActuals.length ? Math.max(...holdActuals) : 0;
+  const pr = PRACTICES[currentPractice] || PRACTICES.hold;
+  animatePhaseLabel('Session complete');
+  el.timeDisplay.textContent = '✓';
+  el.timeDisplay.classList.add('complete');
+  if(currentPractice === 'hold'){
+    el.roundLabel.textContent = `${totalRounds} round${totalRounds>1?'s':''} · longest hold ${sessionBest}s`;
+  } else {
+    el.roundLabel.textContent = `${pr.name} · ${totalRounds} round${totalRounds>1?'s':''} complete`;
+  }
+  showLetGo(false);
+  setRing(1, pr.color || '#35C9C1');
+  setPulseClass('hold');
+  el.ringWrap.classList.add('complete');
+  chime(880,0.3); setTimeout(()=>chime(1046,0.35), 180);
+  lightHaptic([20,40,20]);
+  launchConfetti();
+  el.startBtn.textContent = 'Start session'; el.startBtn.classList.remove('pause');
+  recordSession(sessionBest).then(result=>{
+    if(result){
+      if(currentPractice === 'hold'){
+        showShareStrip(sessionBest, result.stats, result.isPB);
+        if(result.isPB){
+          setTimeout(()=> launchConfetti(), 400);
+          chime(1174, 0.25);
+        }
+      } else {
+        // Still offer share for other practices
+        showShareStrip(sessionBest || totalRounds, result.stats, false);
+        if(el.shareBtn) el.shareBtn.textContent = 'Share this practice';
+      }
+      checkMilestones(result.stats);
+      renderPracticeStatsGrid();
+    }
+  });
+}
+function startSession(){
+  if(!isPro){ currentPractice = 'hold'; }
+  if(!isPro && !programState){ holdDuration = 90; totalRounds = 1; prepPattern = 'box'; }
+  currentRound = 1; currentPhaseIndex = 0; phaseQueue = buildRoundPhases(); holdActuals = [];
+  el.startBtn.textContent = 'Pause'; el.startBtn.classList.add('pause');
+  el.ringWrap.classList.remove('complete');
+  el.timeDisplay.classList.remove('complete');
+  hideShareStrip();
+  if(el.shareBtn) el.shareBtn.textContent = 'Share this hold';
+  startPhase();
+}
+function pauseSession(){ clearTimeout(timerId); el.startBtn.textContent='Resume'; el.startBtn.classList.remove('pause'); }
+function resumeSession(){ el.startBtn.textContent='Pause'; el.startBtn.classList.add('pause'); tick(); }
+function resetSession(){
+  clearTimeout(timerId); currentPhaseIndex=0; currentRound=1; holdActuals=[];
+  el.phaseLabel.textContent='Ready'; el.phaseLabel.style.color = 'var(--accent-teal)';
+  el.timeDisplay.textContent='00:00';
+  el.timeDisplay.classList.remove('complete');
+  el.roundLabel.textContent=`Round 1 of ${totalRounds}`;
+  showLetGo(false);
+  setRing(0,'#35C9C1');
+  if(el.ringPulse) el.ringPulse.className = 'ring-pulse';
+  el.ringWrap.classList.remove('complete');
+  el.startBtn.textContent='Start session'; el.startBtn.classList.remove('pause');
+  hideShareStrip();
+}
+el.letGoBtn.addEventListener('click', ()=>{
+  const phase = phaseQueue[currentPhaseIndex];
+  if(!phase || phase.name !== 'hold') return;
+  clearTimeout(timerId);
+  holdActuals.push(phaseTotal - remaining);
+  showLetGo(false);
+  lightHaptic(25);
+  currentPhaseIndex++;
+  startPhase();
+});
+el.startBtn.addEventListener('click', ()=>{
+  if(el.startBtn.textContent === 'Start session') startSession();
+  else if(el.startBtn.textContent === 'Pause') pauseSession();
+  else resumeSession();
+});
+el.resetBtn.addEventListener('click', resetSession);
+el.holdSlider.addEventListener('input', e=>{ holdDuration = parseInt(e.target.value); el.holdValueLabel.textContent = holdDuration+'s'; updateHoldExplainer(); });
+el.roundsSlider.addEventListener('input', e=>{ totalRounds = parseInt(e.target.value); el.roundsValueLabel.textContent = totalRounds; el.roundLabel.textContent = `Round 1 of ${totalRounds}`; });
+document.querySelectorAll('.pattern-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.pattern-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active'); prepPattern = btn.dataset.pattern;
+  });
+});
+el.infoToggle.addEventListener('click', ()=>{ el.infoBody.classList.toggle('open'); el.infoChev.classList.toggle('open'); });
+
+// ================= PROGRAM =================
+function daysBetween(a,b){ return Math.floor((b - a) / 86400000); }
+function currentProgramWeek(){
+  if(!programState) return null;
+  const start = new Date(programState.startDate);
+  const today = new Date(); today.setHours(0,0,0,0); start.setHours(0,0,0,0);
+  const dayIndex = daysBetween(start, today);
+  const weekIndex = Math.min(Math.floor(dayIndex/7), 7);
+  return { weekIndex, dayIndex, config: PROGRAM_WEEKS[weekIndex] };
+}
+function applyProgramToday(){
+  const cw = currentProgramWeek();
+  if(!cw){ el.programTag.style.display='none'; return; }
+  const target = dayTarget(cw.dayIndex);
+  const rounds = dayRounds(cw.dayIndex);
+  holdDuration = target; totalRounds = rounds;
+  el.holdSlider.value = Math.min(120, target); el.holdSlider.disabled = true;
+  el.roundsSlider.value = rounds; el.roundsSlider.disabled = true;
+  el.holdValueLabel.textContent = target+'s'; el.roundsValueLabel.textContent = rounds;
+  el.roundLabel.textContent = `Round 1 of ${rounds}`;
+  el.programTag.style.display = 'block';
+  el.programTag.textContent = `Program · Day ${Math.min(cw.dayIndex+1,56)} target ${target}s`;
+  updateHoldExplainer();
+}
+function renderProgramView(){
+  const cw = currentProgramWeek();
+  if(!programState){
+    el.programStartBtn.style.display='block';
+    el.programWeeksCard.style.display='none';
+    return;
+  }
+  el.programStartBtn.style.display='none';
+  el.programWeeksCard.style.display='block';
+  const dailyLog = programState.dailyLog || {};
+  const todayKey = new Date().toISOString().slice(0,10);
+  const todayEntry = dailyLog[todayKey];
+  if(cw.dayIndex >= 56){
+    el.programStatusHeading.textContent = 'Maintenance level';
+    el.programStatusSub.textContent = todayEntry
+      ? `Today: held ${todayEntry.actual}s of a ${todayEntry.target}s target.`
+      : `You've built up to a sustainable ~90s daily hold without straining. This is your ongoing target — keep practicing here day to day.`;
+  } else {
+    const todayTarget = dayTarget(cw.dayIndex);
+    el.programStatusHeading.textContent = `Day ${cw.dayIndex+1} of 56 · Week ${cw.weekIndex+1}`;
+    el.programStatusSub.textContent = todayEntry
+      ? `Today: held ${todayEntry.actual}s of a ${todayEntry.target}s target.`
+      : `Today's target: ${todayTarget}s · ${dayRounds(cw.dayIndex)} rounds`;
+  }
+  el.weekList.innerHTML = '';
+  PROGRAM_WEEKS.forEach((w, idx)=>{
+    const row = document.createElement('div');
+    row.className = 'week-row' + (idx===cw.weekIndex ? ' current' : '') + (idx<cw.weekIndex ? ' done' : '');
+    const weekStartIdx = idx*7;
+    const weekStart = new Date(programState.startDate); weekStart.setDate(weekStart.getDate() + weekStartIdx);
+    let dotsHtml = '';
+    for(let d=0; d<7; d++){
+      const day = new Date(weekStart); day.setDate(day.getDate()+d);
+      const key = day.toISOString().slice(0,10);
+      const entry = dailyLog[key];
+      let cls = '';
+      if(entry) cls = entry.actual >= entry.target ? ' filled' : ' partial';
+      dotsHtml += `<div class="dot${cls}"></div>`;
+    }
+    row.innerHTML = `
+      <div class="week-num">W${w.week}</div>
+      <div class="week-info">
+        <div class="week-target">${dayTarget(weekStartIdx)}–${dayTarget(weekStartIdx+6)}s hold</div>
+        <div class="week-detail">${dayRounds(weekStartIdx+3)} rounds/day</div>
+      </div>
+      <div class="week-dots">${dotsHtml}</div>
+    `;
+    el.weekList.appendChild(row);
+  });
+}
+el.programStartBtn.addEventListener('click', async ()=>{
+  if(!isPro){
+    window.open('https://REPLACE-WITH-YOUR-PADDLE-CHECKOUT-LINK-MONTHLY', '_blank', 'noopener');
+    return;
+  }
+  programState = { startDate: new Date().toISOString(), dailyLog: {} };
+  await saveProgram();
+  applyProgramToday(); renderProgramView();
+});
+el.programStopBtn.addEventListener('click', async ()=>{
+  programState = null;
+  await saveProgram();
+  el.holdSlider.disabled=false; el.roundsSlider.disabled=false;
+  el.programTag.style.display='none';
+  renderProgramView();
+});
+async function saveProgram(){
+  try{ await storage.set('zena-program', JSON.stringify(programState)); }catch(e){}
+}
+async function loadProgram(){
+  try{
+    const r = await storage.get('zena-program');
+    if(r && r.value) programState = JSON.parse(r.value);
+  }catch(e){}
+  if(programState){ applyProgramToday(); }
+  renderProgramView();
+}
+async function recordProgramDay(actualBest){
+  if(!programState) return;
+  const cw = currentProgramWeek();
+  const today = new Date().toISOString().slice(0,10);
+  const target = dayTarget(cw.dayIndex);
+  programState.dailyLog = programState.dailyLog || {};
+  const existing = programState.dailyLog[today];
+  // if they practice more than once today, keep the better result
+  const bestActual = existing ? Math.max(existing.actual, actualBest) : actualBest;
+  programState.dailyLog[today] = { target, actual: bestActual };
+  await saveProgram();
+  renderProgramView();
+}
+
+// ================= PERSISTENCE: STATS =================
+async function loadStats(){
+  try{
+    const r = await storage.get('breath-hold-stats');
+    if(r && r.value){ renderStats(JSON.parse(r.value)); return; }
+  }catch(e){}
+  renderStats({ totalSessions:0, bestHold:0, lastDate:null, streak:0 });
+}
+function renderStats(d){
+  const prevStreak = el.streakStat.textContent;
+  const prevTotal = el.totalStat.textContent;
+  const prevBest = el.bestStat.textContent;
+  [el.streakStat, el.streakStat2].forEach(x=>x.textContent = d.streak || 0);
+  [el.totalStat, el.totalStat2].forEach(x=>x.textContent = d.totalSessions || 0);
+  [el.bestStat, el.bestStat2].forEach(x=>x.textContent = (d.bestHold||0)+'s');
+  if(String(d.streak||0) !== prevStreak) pulseStat(el.streakStat);
+  if(String(d.totalSessions||0) !== prevTotal) pulseStat(el.totalStat);
+  if(((d.bestHold||0)+'s') !== prevBest){ pulseStat(el.bestStat); pulseStat(el.bestStat2); }
+}
+async function recordSession(actualBest){
+  let result = null;
+  try{
+    let data;
+    try{
+      const r = await storage.get('breath-hold-stats');
+      data = r && r.value ? JSON.parse(r.value) : { totalSessions:0, bestHold:0, lastDate:null, streak:0 };
+    }catch(e){ data = { totalSessions:0, bestHold:0, lastDate:null, streak:0 }; }
+    const prevBest = data.bestHold || 0;
+    const today = new Date().toISOString().slice(0,10);
+    if(data.lastDate !== today){
+      const yesterday = new Date(Date.now()-86400000).toISOString().slice(0,10);
+      data.streak = (data.lastDate === yesterday) ? (data.streak||0)+1 : 1;
+      data.lastDate = today;
+    }
+    data.totalSessions = (data.totalSessions||0)+1;
+    if(currentPractice === 'hold'){
+      data.bestHold = Math.max(data.bestHold||0, actualBest||0);
+    }
+    const isPB = currentPractice === 'hold' && (actualBest||0) > prevBest && (actualBest||0) > 0;
+    await storage.set('breath-hold-stats', JSON.stringify(data));
+    renderStats(data);
+    result = { stats: data, isPB };
+  }catch(e){ console.error(e); }
+
+  // Per-practice log (all techniques)
+  try{
+    const key = currentPractice || 'hold';
+    if(!practiceStats[key]) practiceStats[key] = { sessions:0, streak:0, lastDate:null, bestHold:0 };
+    const ps = practiceStats[key];
+    const today = new Date().toISOString().slice(0,10);
+    if(ps.lastDate !== today){
+      const yesterday = new Date(Date.now()-86400000).toISOString().slice(0,10);
+      ps.streak = (ps.lastDate === yesterday) ? (ps.streak||0)+1 : 1;
+      ps.lastDate = today;
+    }
+    ps.sessions = (ps.sessions||0)+1;
+    if(key === 'hold') ps.bestHold = Math.max(ps.bestHold||0, actualBest||0);
+    await storage.set('zena-practice-stats', JSON.stringify(practiceStats));
+  }catch(e){ console.error(e); }
+
+  if(currentPractice === 'hold') recordProgramDay(actualBest);
+  return result;
+}
+
+async function loadPracticeStats(){
+  try{
+    const r = await storage.get('zena-practice-stats');
+    if(r && r.value) practiceStats = JSON.parse(r.value);
+  }catch(e){}
+  renderPracticeStatsGrid();
+}
+function renderPracticeStatsGrid(){
+  if(!el.practiceStatsGrid) return;
+  el.practiceStatsGrid.innerHTML = '';
+  Object.values(PRACTICES).forEach(pr=>{
+    const ps = practiceStats[pr.id] || { sessions:0, streak:0 };
+    const card = document.createElement('div');
+    card.className = 'practice-stat-card';
+    card.innerHTML = `
+      <div class="ps-name">${pr.short}</div>
+      <div class="ps-val">${ps.sessions||0}</div>
+      <div class="ps-name" style="margin-top:4px;">${ps.streak||0} day streak</div>
+    `;
+    el.practiceStatsGrid.appendChild(card);
+  });
+}
+
+// ================= HR TRACKING =================
+let hrLog = [];
+async function loadHrLog(){
+  try{
+    const r = await storage.get('zena-hr-log');
+    if(r && r.value) hrLog = JSON.parse(r.value);
+  }catch(e){}
+}
+async function saveHrReading(bpm){
+  hrLog.push({ date: new Date().toISOString(), bpm });
+  if(hrLog.length > 60) hrLog = hrLog.slice(-60);
+  try{ await storage.set('zena-hr-log', JSON.stringify(hrLog)); }catch(e){}
+  drawHrChart();
+}
+function drawHrChart(){
+  const canvas = el.hrChart;
+  const displayWidth = canvas.clientWidth || 440;
+  if(canvas.width !== displayWidth) canvas.width = displayWidth;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  ctx.clearRect(0,0,w,h);
+  const recent = hrLog.slice(-14);
+  if(recent.length < 2){ el.hrEmpty.style.display='block'; canvas.style.display='none'; return; }
+  el.hrEmpty.style.display='none'; canvas.style.display='block';
+  const vals = recent.map(r=>r.bpm);
+  const min = Math.min(...vals)-5, max = Math.max(...vals)+5;
+  const pad = 10;
+  ctx.strokeStyle = '#35C9C1'; ctx.lineWidth = 2.5; ctx.beginPath();
+  recent.forEach((r,i)=>{
+    const x = pad + (i/(recent.length-1)) * (w - pad*2);
+    const y = h - pad - ((r.bpm - min)/(max-min)) * (h - pad*2);
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+  ctx.fillStyle = '#35C9C1';
+  recent.forEach((r,i)=>{
+    const x = pad + (i/(recent.length-1)) * (w - pad*2);
+    const y = h - pad - ((r.bpm - min)/(max-min)) * (h - pad*2);
+    ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2); ctx.fill();
+  });
+}
+
+// ---- camera PPG ----
+let camStream = null, sampling = false, samples = [];
+el.measureBtn.addEventListener('click', ()=>{ el.hrModal.classList.add('open'); el.hrReading.textContent='--'; el.hrStatus.textContent='Ready to measure'; });
+el.hrModalClose.addEventListener('click', stopCameraAndClose);
+function stopCameraAndClose(){
+  if(camStream){ camStream.getTracks().forEach(t=>t.stop()); camStream=null; }
+  sampling = false;
+  el.hrModal.classList.remove('open');
+  el.camPreview.style.display='none';
+}
+el.camStartBtn.addEventListener('click', async ()=>{
+  samples = [];
+  try{
+    camStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode:'environment' } });
+    el.camPreview.srcObject = camStream;
+    el.camPreview.style.display='block';
+    try{
+      const track = camStream.getVideoTracks()[0];
+      await track.applyConstraints({ advanced: [{ torch:true }] });
+    }catch(e){ /* torch not supported, continue anyway */ }
+    el.hrStatus.textContent = 'Measuring... hold still (15s)';
+    sampling = true;
+    const canvas = document.createElement('canvas'); canvas.width=40; canvas.height=40;
+    const cctx = canvas.getContext('2d');
+    const startTime = Date.now();
+    function sampleFrame(){
+      if(!sampling) return;
+      if(el.camPreview.readyState >= 2){
+        cctx.drawImage(el.camPreview, 0, 0, 40, 40);
+        const frame = cctx.getImageData(0,0,40,40).data;
+        let sum=0;
+        for(let i=0;i<frame.length;i+=4) sum += frame[i]; // red channel
+        samples.push({ t: Date.now()-startTime, v: sum/(frame.length/4) });
+      }
+      if(Date.now()-startTime < 15000){ requestAnimationFrame(sampleFrame); }
+      else { sampling=false; finishMeasurement(); }
+    }
+    requestAnimationFrame(sampleFrame);
+  }catch(e){
+    el.hrStatus.textContent = 'Camera unavailable — enter BPM manually below';
+  }
+});
+function finishMeasurement(){
+  if(camStream){ camStream.getTracks().forEach(t=>t.stop()); camStream=null; }
+  el.camPreview.style.display='none';
+  if(samples.length < 30){ el.hrStatus.textContent='Not enough signal — try again or enter manually'; return; }
+  // smooth
+  const vals = samples.map(s=>s.v);
+  const smoothed = vals.map((v,i)=>{
+    const lo=Math.max(0,i-2), hi=Math.min(vals.length-1,i+2);
+    let s=0,c=0; for(let j=lo;j<=hi;j++){s+=vals[j];c++;} return s/c;
+  });
+  const mean = smoothed.reduce((a,b)=>a+b,0)/smoothed.length;
+  const peaks = [];
+  for(let i=2;i<smoothed.length-2;i++){
+    if(smoothed[i] > mean && smoothed[i] > smoothed[i-1] && smoothed[i] >= smoothed[i+1]){
+      if(peaks.length===0 || samples[i].t - peaks[peaks.length-1] > 300){
+        peaks.push(samples[i].t);
+      }
+    }
+  }
+  if(peaks.length < 3){ el.hrStatus.textContent='Signal too noisy — try again or enter manually'; return; }
+  const intervals = [];
+  for(let i=1;i<peaks.length;i++) intervals.push(peaks[i]-peaks[i-1]);
+  const avgMs = intervals.reduce((a,b)=>a+b,0)/intervals.length;
+  const bpm = Math.round(60000/avgMs);
+  if(bpm < 35 || bpm > 200){ el.hrStatus.textContent='Reading out of range — try again or enter manually'; return; }
+  el.hrReading.textContent = bpm;
+  el.hrStatus.textContent = 'Estimated resting heart rate (camera)';
+  saveHrReading(bpm);
+}
+el.manualSaveBtn.addEventListener('click', ()=>{
+  const val = parseInt(el.manualHr.value);
+  if(!val || val<30 || val>220){ el.hrStatus.textContent='Enter a value between 30–220'; return; }
+  el.hrReading.textContent = val;
+  el.hrStatus.textContent = 'Saved (manual entry)';
+  saveHrReading(val);
+  el.manualHr.value='';
+});
+
+// ================= INIT =================
+(async function init(){
+  await loadPro();
+  await loadStats();
+  await loadProgram();
+  await loadHrLog();
+  await loadBadges();
+  await loadPracticeStats();
+  applyGating();
+  drawHrChart();
+})();
+window.addEventListener('resize', ()=>{ if(document.getElementById('view-progress').classList.contains('active')) drawHrChart(); });
+</script>
+
+</body>
+</html>

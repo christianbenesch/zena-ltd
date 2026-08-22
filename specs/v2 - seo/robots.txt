@@ -1,0 +1,11 @@
+# zena.ltd — robots.txt
+# Upload to the site ROOT so it resolves at https://zena.ltd/robots.txt
+
+User-agent: *
+Allow: /
+
+# Stripe / checkout return URLs carry session ids — no value in the index
+Disallow: /*?session_id=
+Disallow: /*?pro=
+
+Sitemap: https://zena.ltd/sitemap.xml

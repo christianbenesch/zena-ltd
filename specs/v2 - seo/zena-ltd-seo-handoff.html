@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zena.ltd — SEO &amp; Schema Handoff for IT</title>
+<style>
+  :root { --bg:#0b1220; --card:#121c2e; --line:#1e2d45; --text:#e8eef6; --muted:#8aa0b8; --accent:#35C9C1; --warn:#FF8B61; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background: var(--bg); color: var(--text); line-height: 1.55; padding: 32px 20px 64px; }
+  .wrap { max-width: 880px; margin: 0 auto; }
+  h1 { font-size: 28px; margin-bottom: 8px; }
+  h2 { font-size: 18px; margin: 36px 0 12px; color: var(--accent); border-bottom: 1px solid var(--line); padding-bottom: 8px; }
+  h3 { font-size: 15px; margin: 20px 0 8px; color: #b8d4e8; }
+  p, li { color: var(--muted); font-size: 14px; }
+  p { margin-bottom: 10px; }
+  ul { margin: 8px 0 12px 20px; }
+  .meta { color: var(--muted); font-size: 13px; margin-bottom: 28px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; margin: 14px 0; }
+  .warn { border-color: rgba(255,139,97,0.4); background: rgba(255,139,97,0.06); }
+  code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; }
+  pre { background: #070d16; border: 1px solid var(--line); border-radius: 10px; padding: 16px; overflow-x: auto; color: #cde; white-space: pre; line-height: 1.45; }
+  .label { display: inline-block; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); margin-bottom: 8px; }
+  .step { counter-increment: s; }
+  .steps { counter-reset: s; }
+  .step::before { content: counter(s); display: inline-flex; width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: #04211d; font-weight: 700; font-size: 12px; align-items: center; justify-content: center; margin-right: 8px; }
+  a { color: var(--accent); }
+  .copy-note { font-size: 12px; color: var(--warn); margin-top: 6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Zena.ltd — SEO &amp; Schema Handoff</h1>
+  <p class="meta">Domain: <strong style="color:var(--text)">https://zena.ltd</strong> &nbsp;·&nbsp; For IT / deployment &nbsp;·&nbsp; Generated for the breath-training web app</p>
+
+  <div class="card warn">
+    <strong style="color:var(--warn)">Important</strong>
+    <p style="margin-top:6px">1. Prefer one host only: <code>zena.ltd</code> (apex). 301-redirect <code>www.zena.ltd</code> → <code>https://zena.ltd</code> (or the reverse — pick one and stick to it everywhere).<br>
+    2. Replace placeholder image URLs (<code>/og-image.png</code>, <code>/logo.png</code>) with real assets (OG image ideally 1200×630).<br>
+    3. Replace Paddle checkout URLs in schema when live.<br>
+    4. Do not invent star ratings in schema until real, visible reviews exist on the page.</p>
+  </div>
+
+  <!-- ========== 1. HEAD TAGS ========== -->
+  <h2>1. Add these tags inside &lt;head&gt;</h2>
+  <p>Merge with the existing page. Keep the current title tag only if you prefer it; the block below is the recommended SEO set.</p>
+
+  <div class="card">
+    <div class="label">Copy into &lt;head&gt;</div>
+<pre>&lt;title&gt;Zena — Daily Breath Hold Training | CO₂ Tolerance &amp; Calm&lt;/title&gt;
+
+&lt;meta name="description" content="Free daily breath-hold training. Build CO₂ tolerance, calm under pressure, and track progress with guided holds, box breathing, 4-7-8, and an 8-week progression. Age backwards — one hold at a time."&gt;
+
+&lt;meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"&gt;
+
+&lt;link rel="canonical" href="https://zena.ltd/"&gt;
+
+&lt;!-- Open Graph --&gt;
+&lt;meta property="og:type" content="website"&gt;
+&lt;meta property="og:url" content="https://zena.ltd/"&gt;
+&lt;meta property="og:title" content="Zena — Daily Breath Hold Training"&gt;
+&lt;meta property="og:description" content="Guided breath holds, CO₂ tolerance training, and nervous-system practices. Free core timer + Zena+ for full program and tracking."&gt;
+&lt;meta property="og:image" content="https://zena.ltd/og-image.png"&gt;
+&lt;meta property="og:site_name" content="Zena"&gt;
+&lt;meta property="og:locale" content="en_US"&gt;
+
+&lt;!-- Twitter / X --&gt;
+&lt;meta name="twitter:card" content="summary_large_image"&gt;
+&lt;meta name="twitter:title" content="Zena — Daily Breath Hold Training"&gt;
+&lt;meta name="twitter:description" content="Build breath-hold capacity and calm. Free daily practice + optional progression program."&gt;
+&lt;meta name="twitter:image" content="https://zena.ltd/og-image.png"&gt;
+
+&lt;!-- Mobile / theme --&gt;
+&lt;meta name="theme-color" content="#071620"&gt;
+&lt;meta name="apple-mobile-web-app-capable" content="yes"&gt;
+&lt;meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"&gt;
+&lt;meta name="apple-mobile-web-app-title" content="Zena"&gt;
+
+&lt;!-- Icons (add real files on the server) --&gt;
+&lt;link rel="icon" href="/favicon.ico" sizes="any"&gt;
+&lt;link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png"&gt;
+&lt;link rel="apple-touch-icon" href="/apple-touch-icon.png"&gt;
+&lt;!-- Optional PWA: &lt;link rel="manifest" href="/manifest.webmanifest"&gt; --&gt;</pre>
+  </div>
+
+  <!-- ========== 2. JSON-LD ========== -->
+  <h2>2. Schema.org JSON-LD (paste once in &lt;head&gt; or before &lt;/body&gt;)</h2>
+  <p>Primary structured data for Google: Organization + WebSite + WebApplication + WebPage.</p>
+
+  <div class="card">
+    <div class="label">Main schema — required</div>
+<pre>&lt;script type="application/ld+json"&gt;
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://zena.ltd/#organization",
+      "name": "Zena",
+      "url": "https://zena.ltd/",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://zena.ltd/logo.png"
+      },
+      "sameAs": []
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://zena.ltd/#website",
+      "url": "https://zena.ltd/",
+      "name": "Zena",
+      "description": "Daily breath-hold and breathwork training for CO₂ tolerance, calm, and endurance.",
+      "publisher": { "@id": "https://zena.ltd/#organization" },
+      "inLanguage": "en"
+    },
+    {
+      "@type": "WebApplication",
+      "@id": "https://zena.ltd/#app",
+      "name": "Zena — Daily Breath Hold",
+      "url": "https://zena.ltd/",
+      "description": "Browser-based breath-hold timer and breathwork practices. Free core breath-hold sessions plus Zena+ for box breathing, physiological sigh, 4-7-8, coherent breathing, extended exhale, 8-week progression, streaks, and resting heart-rate trends.",
+      "applicationCategory": "HealthApplication",
+      "applicationSubCategory": "Breathwork / Breath-hold training",
+      "operatingSystem": "Any (Web browser)",
+      "browserRequirements": "Requires JavaScript and HTML5. Modern mobile or desktop browser recommended.",
+      "offers": [
+        {
+          "@type": "Offer",
+          "name": "Free",
+          "price": "0",
+          "priceCurrency": "USD",
+          "availability": "https://schema.org/InStock",
+          "url": "https://zena.ltd/"
+        },
+        {
+          "@type": "Offer",
+          "name": "Zena+ Monthly",
+          "price": "5.99",
+          "priceCurrency": "USD",
+          "availability": "https://schema.org/InStock",
+          "url": "https://REPLACE-WITH-YOUR-PADDLE-CHECKOUT-LINK-MONTHLY"
+        },
+        {
+          "@type": "Offer",
+          "name": "Zena+ Annual",
+          "price": "49.99",
+          "priceCurrency": "USD",
+          "availability": "https://schema.org/InStock",
+          "url": "https://REPLACE-WITH-YOUR-PADDLE-CHECKOUT-LINK-ANNUAL"
+        }
+      ],
+      "featureList": [
+        "Timed breath holds with guided prep breathing",
+        "Box breathing, physiological sigh, 4-7-8, coherent breathing, extended exhale (Zena+)",
+        "8-week CO₂ tolerance progression program",
+        "Streaks, personal bests, and session history",
+        "Resting heart-rate logging and trends",
+        "Shareable progress cards and badges"
+      ],
+      "screenshot": "https://zena.ltd/og-image.png",
+      "isAccessibleForFree": true,
+      "publisher": { "@id": "https://zena.ltd/#organization" }
+    },
+    {
+      "@type": "WebPage",
+      "@id": "https://zena.ltd/#webpage",
+      "url": "https://zena.ltd/",
+      "name": "Zena — Daily Breath Hold Training",
+      "isPartOf": { "@id": "https://zena.ltd/#website" },
+      "about": { "@id": "https://zena.ltd/#app" },
+      "description": "Practice daily breath holds and guided breathwork. Free core timer; Zena+ unlocks full practices, program, and progress tracking.",
+      "inLanguage": "en"
+    }
+  ]
+}
+&lt;/script&gt;</pre>
+  </div>
+
+  <div class="card">
+    <div class="label">Optional FAQ schema — only if answers are visible on the page</div>
+<pre>&lt;script type="application/ld+json"&gt;
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Why practice a 90-second breath hold?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Short, repeated hypoxic holds can support EPO-related adaptations, improved CO₂ tolerance, more efficient oxygen use, and a calmer nervous-system response. It is a stress-adaptation practice, not medical treatment."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is breath-hold training safe?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Never practice breath holds in or near water, while driving, or standing. Sit or lie down. Stop if lightheaded. Skip if pregnant or if you have cardiovascular, respiratory, or seizure conditions — check with a doctor. Not medical advice."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is included in free vs Zena+?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Free includes the core breath-hold session. Zena+ adds box breathing, physiological sigh, 4-7-8, coherent breathing, extended exhale, the 8-week program, custom hold length and rounds, streaks, badges, and resting heart-rate trends."
+      }
+    }
+  ]
+}
+&lt;/script&gt;</pre>
+    <p class="copy-note">Skip FAQ schema if the matching text is only injected by JavaScript and not present in the initial HTML.</p>
+  </div>
+
+  <!-- ========== 3. robots.txt ========== -->
+  <h2>3. File: /robots.txt (site root)</h2>
+  <div class="card">
+<pre>User-agent: *
+Allow: /
+
+Sitemap: https://zena.ltd/sitemap.xml</pre>
+  </div>
+
+  <!-- ========== 4. sitemap.xml ========== -->
+  <h2>4. File: /sitemap.xml (site root)</h2>
+  <div class="card">
+<pre>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"&gt;
+  &lt;url&gt;
+    &lt;loc&gt;https://zena.ltd/&lt;/loc&gt;
+    &lt;lastmod&gt;2026-08-20&lt;/lastmod&gt;
+    &lt;changefreq&gt;weekly&lt;/changefreq&gt;
+    &lt;priority&gt;1.0&lt;/priority&gt;
+  &lt;/url&gt;
+&lt;/urlset&gt;</pre>
+    <p class="copy-note">Update &lt;lastmod&gt; when the homepage changes meaningfully. Add more &lt;url&gt; entries if you create real path-based routes later.</p>
+  </div>
+
+  <!-- ========== 5. Search Console steps ========== -->
+  <h2>5. Google Search Console — after deploy</h2>
+  <div class="card steps">
+    <p class="step">Verify property for <code>zena.ltd</code> (DNS TXT record preferred, or HTML file upload).</p>
+    <p class="step">Confirm preferred host (apex vs www) and that the non-preferred host 301-redirects.</p>
+    <p class="step">Submit sitemap: <code>https://zena.ltd/sitemap.xml</code></p>
+    <p class="step">URL Inspection → enter <code>https://zena.ltd/</code> → Test live URL → Request indexing.</p>
+    <p class="step">Validate structured data: <a href="https://search.google.com/test/rich-results" target="_blank" rel="noopener">Rich Results Test</a> and <a href="https://validator.schema.org/" target="_blank" rel="noopener">Schema Markup Validator</a>.</p>
+    <p class="step">Monitor Pages report for “Crawled – currently not indexed” (common with heavy client-side apps).</p>
+  </div>
+
+  <!-- ========== 6. Hosting / technical notes ========== -->
+  <h2>6. Technical notes for IT</h2>
+  <div class="card">
+    <ul>
+      <li><strong>HTTPS only</strong> — force HTTPS; no mixed content.</li>
+      <li><strong>One preferred host</strong> — 301 redirect the other (www ↔ apex).</li>
+      <li><strong>SPA caveat</strong> — Google can render JS, but important text (benefits, safety) should ideally exist in the initial HTML response, not only after hydration. Pre-render or SSR static copy if indexing is thin.</li>
+      <li><strong>No noindex</strong> on production. Check staging does not leak a noindex robots meta or X-Robots-Tag.</li>
+      <li><strong>Assets needed on CDN/server:</strong>
+        <ul>
+          <li><code>/og-image.png</code> — ~1200×630 social share image</li>
+          <li><code>/logo.png</code> — square logo for schema</li>
+          <li><code>/favicon.ico</code>, <code>/favicon-32.png</code>, <code>/apple-touch-icon.png</code></li>
+        </ul>
+      </li>
+      <li><strong>Paddle links</strong> — replace the two <code>REPLACE-WITH-YOUR-PADDLE-…</code> URLs in the WebApplication offers (and in the app UI) before launch.</li>
+      <li><strong>Do not add aggregateRating</strong> until real ratings are visible on the page and match the numbers.</li>
+    </ul>
+  </div>
+
+  <!-- ========== 7. Checklist ========== -->
+  <h2>7. Deploy checklist</h2>
+  <div class="card">
+    <ul>
+      <li>☐ Meta tags + canonical in live HTML</li>
+      <li>☐ JSON-LD schema live and validating</li>
+      <li>☐ <code>/robots.txt</code> live</li>
+      <li>☐ <code>/sitemap.xml</code> live</li>
+      <li>☐ OG image + logo + favicons uploaded</li>
+      <li>☐ Apex/www 301 decision applied</li>
+      <li>☐ Search Console verified + sitemap submitted</li>
+      <li>☐ Homepage requested for indexing</li>
+      <li>☐ Paddle URLs updated in schema and app</li>
+    </ul>
+  </div>
+
+  <p style="margin-top:32px; font-size:12px; color:#5a7088; text-align:center;">
+    Zena.ltd SEO handoff · domain locked to https://zena.ltd · for internal IT use
+  </p>
+
+</div>
+</body>
+</html>

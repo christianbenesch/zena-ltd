@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  zena.ltd — sitemap
+  Upload to the site ROOT so it resolves at https://zena.ltd/sitemap.xml
+
+  Update <lastmod> whenever the page content meaningfully changes.
+  Add a new <url> block for each additional page (e.g. /privacy, /terms).
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://zena.ltd/</loc>
+    <lastmod>2026-08-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>

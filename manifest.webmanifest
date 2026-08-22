@@ -1,0 +1,23 @@
+{
+  "name": "Zena — Daily Breath Hold",
+  "short_name": "Zena",
+  "description": "Guided breath holds and breathwork training.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#071620",
+  "theme_color": "#071620",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

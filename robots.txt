@@ -1,4 +1,8 @@
 User-agent: *
 Allow: /
 
+# Checkout return URLs include an ephemeral Stripe session identifier.
+Disallow: /*?session_id=
+Disallow: /*?checkout=success
+
 Sitemap: https://zena.ltd/sitemap.xml

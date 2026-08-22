@@ -542,6 +542,11 @@ footer{ text-align:center; margin-top:24px; color:var(--text-muted); font-size:1
     <div class="eyebrow">zena.ltd</div>
     <h1>Zena</h1>
     <div class="sub">Zena. Age backwards. Keep track of your progress.</div>
+    <div class="controls-row" style="margin-top:14px; justify-content:center;">
+      <button class="btn-secondary" id="accountBtn" style="padding:8px 14px;">Sign in to sync</button>
+      <button class="btn-secondary" id="accountSignOutBtn" style="display:none; padding:8px 14px;">Sign out</button>
+    </div>
+    <div class="chart-sub" id="accountStatus" role="status" aria-live="polite" style="text-align:center; margin-top:8px;"></div>
   </header>
 
   <div class="tabs">
@@ -733,6 +738,21 @@ footer{ text-align:center; margin-top:24px; color:var(--text-muted); font-size:1
   </div>
 </div>
 
+<div class="modal-overlay" id="accountModal">
+  <div class="modal">
+    <h3>Keep your progress</h3>
+    <p>Sign in to restore Zena+ and your progress on every device.</p>
+    <button class="btn-primary" id="googleSignInBtn" style="width:100%;">Continue with Google</button>
+    <div class="chart-sub" style="text-align:center; margin:14px 0;">or continue with email</div>
+    <input id="accountEmail" type="email" placeholder="Email address" autocomplete="email" style="width:100%; margin-bottom:8px;">
+    <input id="accountPassword" type="password" placeholder="Password" autocomplete="current-password" style="width:100%; margin-bottom:10px;">
+    <button class="btn-secondary" id="emailSignInBtn" style="width:100%;">Sign in</button>
+    <button class="btn-secondary" id="emailSignUpBtn" style="width:100%; margin-top:8px;">Create account</button>
+    <button class="btn-secondary modal-close" id="accountModalClose" style="width:100%; margin-top:12px;">Close</button>
+  </div>
+</div>
+
+<script type="module" src="/auth-client.js"></script>
 <script>
 // ================= PROGRAM DATA =================
 const PROGRAM_WEEKS = [
@@ -843,7 +863,7 @@ const storage = {
   },
   async set(key, value){
     if(window.storage) return window.storage.set(key, value, false);
-    try{ localStorage.setItem('zena_'+key, value); return { key, value }; }
+    try{ localStorage.setItem('zena_'+key, value); window.zenaAccountSync?.(); return { key, value }; }
     catch(e){ return null; }
   }
 };
@@ -1943,6 +1963,28 @@ el.manualSaveBtn.addEventListener('click', ()=>{
 });
 
 // ================= INIT =================
+async function accountUi(){
+  const byId=id=>document.getElementById(id), modal=byId('accountModal'), status=byId('accountStatus');
+  const api=async(path, options={})=>{const token=await window.zenaAuth.token(); return fetch(path,{...options,headers:{...(options.headers||{}),Authorization:`Bearer ${token}`}})};
+  async function refresh(){
+    if(!window.zenaAuth) return;
+    const token=await window.zenaAuth.token(); if(!token) return;
+    const response=await api('/api/account'); if(!response.ok) return;
+    const account=await response.json(); isPro=account.active; await savePro(); applyGating();
+    byId('accountBtn').style.display='none'; byId('accountSignOutBtn').style.display=''; status.textContent='Signed in — your progress syncs across devices.';
+    const keys=['zena-program','zena-practice-stats','zena-hr-log','zena-badges','breath-hold-stats'];
+    if(Object.keys(account.state||{}).length){ for(const key of keys){if(account.state[key]) await storage.set(key,account.state[key]);} await loadStats();await loadProgram();await loadHrLog();await loadBadges();await loadPracticeStats(); }
+    window.zenaAccountSync=async()=>{const state={};for(const key of keys){const value=await storage.get(key);if(value?.value)state[key]=value.value;}await api('/api/account-state',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({state})});};
+    if(Object.keys(account.state||{}).length===0) await window.zenaAccountSync();
+  }
+  byId('accountBtn').onclick=()=>modal.classList.add('show'); byId('accountModalClose').onclick=()=>modal.classList.remove('show');
+  byId('googleSignInBtn').onclick=()=>window.zenaAuth.signInGoogle();
+  byId('emailSignInBtn').onclick=async()=>{const r=await window.zenaAuth.signInEmail(byId('accountEmail').value,byId('accountPassword').value);if(r?.error)status.textContent=r.error.message||'Sign-in failed.';else {modal.classList.remove('show');refresh();}};
+  byId('emailSignUpBtn').onclick=async()=>{const r=await window.zenaAuth.signUpEmail(byId('accountEmail').value,byId('accountPassword').value);if(r?.error)status.textContent=r.error.message||'Account creation failed.';else {modal.classList.remove('show');refresh();}};
+  byId('accountSignOutBtn').onclick=async()=>{await window.zenaAuth.signOut();isPro=false;applyGating();byId('accountBtn').style.display='';byId('accountSignOutBtn').style.display='none';status.textContent='Signed out.';};
+  await refresh();
+}
+window.addEventListener('zena-auth-ready', accountUi, { once:true });
 (async function init(){
   await loadPro();
   await loadStats();

@@ -1,93 +1,21 @@
-const STRIPE_API = 'https://api.stripe.com/v1';
-const JSON_HEADERS = {
-  'content-type': 'application/json; charset=UTF-8',
-  'cache-control': 'no-store',
-};
+import { Client } from 'pg';
+import { createRemoteJWKSet, jwtVerify } from 'jose';
 
-function json(body, status = 200) {
-  return new Response(JSON.stringify(body), { status, headers: JSON_HEADERS });
-}
-
-function stripeAuth(secretKey) {
-  return `Basic ${btoa(`${secretKey}:`)}`;
-}
-
-async function stripeRequest(env, path, options = {}) {
-  if (!env.STRIPE_SECRET_KEY) {
-    throw new Error('Stripe is not configured. Add STRIPE_SECRET_KEY to this Worker.');
-  }
-  const response = await fetch(`${STRIPE_API}${path}`, {
-    ...options,
-    headers: { authorization: stripeAuth(env.STRIPE_SECRET_KEY), ...options.headers },
-  });
-  const payload = await response.json();
-  if (!response.ok) throw new Error(payload?.error?.message || 'Stripe could not process the request.');
-  return payload;
-}
-
-function checkoutSuccessUrl(origin) {
-  return `${origin}/?checkout=success&session_id={CHECKOUT_SESSION_ID}`;
-}
-
-async function createCheckoutSession(request, env) {
-  const { plan } = await request.json().catch(() => ({}));
-  const price = plan === 'annual' ? env.STRIPE_PRICE_ANNUAL : plan === 'monthly' ? env.STRIPE_PRICE_MONTHLY : null;
-  if (!price) return json({ error: 'Choose a valid subscription plan.' }, 400);
-
-  const origin = new URL(request.url).origin;
-  const form = new URLSearchParams({
-    mode: 'subscription',
-    success_url: checkoutSuccessUrl(origin),
-    cancel_url: `${origin}/?checkout=cancelled`,
-    allow_promotion_codes: 'true',
-    'line_items[0][price]': price,
-    'line_items[0][quantity]': '1',
-  });
-  const session = await stripeRequest(env, '/checkout/sessions', {
-    method: 'POST',
-    headers: { 'content-type': 'application/x-www-form-urlencoded' },
-    body: form.toString(),
-  });
-  return json({ url: session.url });
-}
-
-async function getCheckoutSession(url, env) {
-  const sessionId = url.searchParams.get('session_id');
-  if (!sessionId || !sessionId.startsWith('cs_')) return json({ error: 'Invalid Checkout Session.' }, 400);
-  const session = await stripeRequest(env, `/checkout/sessions/${encodeURIComponent(sessionId)}?expand[]=subscription`);
-  const subscription = typeof session.subscription === 'object' ? session.subscription : null;
-  const active = session.status === 'complete' && ['active', 'trialing'].includes(subscription?.status);
-  return json({ active });
-}
-
-async function createPortalSession(request, env) {
-  const { session_id: sessionId } = await request.json().catch(() => ({}));
-  if (!sessionId || !sessionId.startsWith('cs_')) return json({ error: 'Invalid Checkout Session.' }, 400);
-  const checkout = await stripeRequest(env, `/checkout/sessions/${encodeURIComponent(sessionId)}`);
-  if (!checkout.customer) return json({ error: 'No Stripe customer was found for this session.' }, 400);
-
-  const origin = new URL(request.url).origin;
-  const form = new URLSearchParams({ customer: checkout.customer, return_url: `${origin}/` });
-  const portal = await stripeRequest(env, '/billing_portal/sessions', {
-    method: 'POST',
-    headers: { 'content-type': 'application/x-www-form-urlencoded' },
-    body: form.toString(),
-  });
-  return json({ url: portal.url });
-}
-
-export default {
-  async fetch(request, env) {
-    const url = new URL(request.url);
-    try {
-      if (url.pathname === '/api/create-checkout-session' && request.method === 'POST') return createCheckoutSession(request, env);
-      if (url.pathname === '/api/checkout-session' && request.method === 'GET') return getCheckoutSession(url, env);
-      if (url.pathname === '/api/create-portal-session' && request.method === 'POST') return createPortalSession(request, env);
-      if (url.pathname.startsWith('/api/')) return json({ error: 'Not found.' }, 404);
-      return env.ASSETS.fetch(request);
-    } catch (error) {
-      console.error('Stripe integration error:', error);
-      return json({ error: error.message || 'Unable to process your request.' }, 500);
-    }
-  },
-};
+const STRIPE_API='https://api.stripe.com/v1', HEADERS={'content-type':'application/json; charset=UTF-8','cache-control':'no-store'};
+let jwks;
+const json=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:HEADERS});
+const active=status=>['active','trialing'].includes(status);
+const form=values=>new URLSearchParams(values).toString();
+function auth(key){return `Basic ${btoa(`${key}:`)}`}
+async function stripe(env,path,options={}){const response=await fetch(STRIPE_API+path,{...options,headers:{authorization:auth(env.STRIPE_SECRET_KEY),...options.headers}});const data=await response.json();if(!response.ok)throw new Error(data?.error?.message||'Stripe request failed.');return data}
+async function db(env,run){if(!env.HYPERDRIVE)throw new Error('Database is not configured.');const client=new Client({connectionString:env.HYPERDRIVE.connectionString});await client.connect();try{return await run(client)}finally{await client.end()}}
+async function user(request,env){const token=request.headers.get('authorization')?.replace(/^Bearer\s+/i,'');if(!token||!env.NEON_AUTH_JWKS_URL)return null;jwks ||=createRemoteJWKSet(new URL(env.NEON_AUTH_JWKS_URL));const {payload}=await jwtVerify(token,jwks);return typeof payload.sub==='string'?payload.sub:null}
+async function profile(client,id){await client.query('INSERT INTO profiles(user_id) VALUES($1) ON CONFLICT DO NOTHING',[id]);return (await client.query('SELECT * FROM profiles WHERE user_id=$1',[id])).rows[0]}
+async function status(client,id){return (await client.query("SELECT status FROM entitlements WHERE user_id=$1 AND product_key='zena_plus'",[id])).rows[0]?.status||'inactive'}
+async function account(request,env){const id=await user(request,env);if(!id)return json({error:'Sign in required.'},401);return db(env,async c=>{await profile(c,id);const state=(await c.query('SELECT data FROM account_state WHERE user_id=$1',[id])).rows[0]?.data||{};const entitlement=await status(c,id);return json({user:{id},state,entitlement,active:active(entitlement)})})}
+async function saveState(request,env){const id=await user(request,env);const state=(await request.json().catch(()=>({}))).state;if(!id)return json({error:'Sign in required.'},401);if(!state||typeof state!=='object'||Array.isArray(state))return json({error:'Invalid state.'},400);return db(env,async c=>{await profile(c,id);await c.query('INSERT INTO account_state(user_id,data) VALUES($1,$2::jsonb) ON CONFLICT(user_id) DO UPDATE SET data=EXCLUDED.data,updated_at=now()',[id,JSON.stringify(state)]);return json({ok:true})})}
+async function checkout(request,env){const id=await user(request,env);const {plan}=await request.json().catch(()=>({}));const price=plan==='annual'?env.STRIPE_PRICE_ANNUAL:plan==='monthly'?env.STRIPE_PRICE_MONTHLY:null;if(!id)return json({error:'Sign in is required before checkout.'},401);if(!price)return json({error:'Choose a valid subscription plan.'},400);return db(env,async c=>{let p=await profile(c,id);if(!p.stripe_customer_id){const customer=await stripe(env,'/customers',{method:'POST',headers:{'content-type':'application/x-www-form-urlencoded'},body:form({'metadata[app_user_id]':id})});p=(await c.query('UPDATE profiles SET stripe_customer_id=$2,updated_at=now() WHERE user_id=$1 RETURNING *',[id,customer.id])).rows[0]}const origin=new URL(request.url).origin;const session=await stripe(env,'/checkout/sessions',{method:'POST',headers:{'content-type':'application/x-www-form-urlencoded'},body:form({mode:'subscription',customer:p.stripe_customer_id,client_reference_id:id,success_url:`${origin}/?checkout=success&session_id={CHECKOUT_SESSION_ID}`,cancel_url:`${origin}/?checkout=cancelled`,'subscription_data[metadata][app_user_id]':id,'line_items[0][price]':price,'line_items[0][quantity]':'1'})});return json({url:session.url})})}
+async function portal(request,env){const id=await user(request,env);if(!id)return json({error:'Sign in required.'},401);return db(env,async c=>{const p=await profile(c,id);if(!p.stripe_customer_id)return json({error:'No billing account found.'},400);const origin=new URL(request.url).origin;const result=await stripe(env,'/billing_portal/sessions',{method:'POST',headers:{'content-type':'application/x-www-form-urlencoded'},body:form({customer:p.stripe_customer_id,return_url:`${origin}/`})});return json({url:result.url})})}
+async function session(request,env){const id=await user(request,env);if(!id)return json({error:'Sign in required.'},401);const sessionId=new URL(request.url).searchParams.get('session_id');if(!sessionId?.startsWith('cs_'))return json({error:'Invalid Checkout Session.'},400);const checkout=await stripe(env,`/checkout/sessions/${encodeURIComponent(sessionId)}`);if(checkout.client_reference_id!==id)return json({error:'Checkout belongs to another account.'},403);return db(env,async c=>{const value=await status(c,id);return json({active:active(value),status:value})})}
+async function webhook(request,env){const raw=await request.text(),sig=request.headers.get('stripe-signature');if(!sig||!env.STRIPE_WEBHOOK_SECRET)return json({error:'Webhook is not configured.'},400);const fields=Object.fromEntries(sig.split(',').map(x=>x.split('=')));const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(env.STRIPE_WEBHOOK_SECRET),{name:'HMAC',hash:'SHA-256'},false,['sign']);const actual=Array.from(new Uint8Array(await crypto.subtle.sign('HMAC',key,new TextEncoder().encode(`${fields.t}.${raw}`)))).map(n=>n.toString(16).padStart(2,'0')).join('');if(actual!==fields.v1)return json({error:'Invalid Stripe signature.'},400);const event=JSON.parse(raw),o=event.data.object;await db(env,async c=>{if(!(await c.query('INSERT INTO stripe_events(stripe_event_id) VALUES($1) ON CONFLICT DO NOTHING RETURNING stripe_event_id',[event.id])).rowCount)return;let id=o.metadata?.app_user_id||o.client_reference_id;if(!id&&o.customer)id=(await c.query('SELECT user_id FROM profiles WHERE stripe_customer_id=$1',[o.customer])).rows[0]?.user_id;if(!id||!o.id?.startsWith('sub_'))return;await profile(c,id);const s=['active','trialing','past_due'].includes(o.status)?o.status:o.status==='canceled'||o.status==='unpaid'?'cancelled':'inactive';await c.query("INSERT INTO entitlements(user_id,product_key,status,stripe_subscription_id) VALUES($1,'zena_plus',$2,$3) ON CONFLICT(user_id,product_key) DO UPDATE SET status=EXCLUDED.status,stripe_subscription_id=EXCLUDED.stripe_subscription_id,updated_at=now()",[id,s,o.id])});return json({received:true})}
+export default {async fetch(request,env){const path=new URL(request.url).pathname;try{if(path==='/api/auth-config'&&request.method==='GET')return json({url:env.NEON_AUTH_URL||null});if(path==='/api/account'&&request.method==='GET')return account(request,env);if(path==='/api/account-state'&&request.method==='PUT')return saveState(request,env);if(path==='/api/create-checkout-session'&&request.method==='POST')return checkout(request,env);if(path==='/api/checkout-session'&&request.method==='GET')return session(request,env);if(path==='/api/create-portal-session'&&request.method==='POST')return portal(request,env);if(path==='/api/stripe-webhook'&&request.method==='POST')return webhook(request,env);if(path.startsWith('/api/'))return json({error:'Not found.'},404);return env.ASSETS.fetch(request)}catch(error){console.error(error);return json({error:error.message||'Unable to process request.'},500)}}};
